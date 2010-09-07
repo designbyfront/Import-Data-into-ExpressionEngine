@@ -15,21 +15,21 @@ However, you can create your own data input type easily, just by creating a PHP 
 
 **Step 1:** Create your new input type PHP class<br />
 The class needs to imlepement 'Input_type' and subsequently should provide four methods:<br />
-- `get_headings()`          -> open file, read first row (headings), close file, return flat array of headings
-- `start_reading_rows()`    -> setup open file, return boolean for success
-- `stop_reading_rows()`     -> setup close file, return int of number of lines output
-- `read_row()`              -> read next row from file, return flat array of row data, or false when no more rows (first call will return headings)
+ - `get_headings()`          -> open file, read first row (headings), close file, return flat array of headings
+ - `start_reading_rows()`    -> setup open file, return boolean for success
+ - `stop_reading_rows()`     -> setup close file, return int of number of lines output
+ - `read_row()`              -> read next row from file, return flat array of row data, or false when no more rows (first call will return headings)
 
 **Step 2:** Place your new input type PHP class in the `modules/import_data/files/input_types`
 
 **Step 3:** Include your new input type PHP class at the top of `mcp.import_data.php`
 
 **Step 4:** Include your new input type PHP class at the top of `mcp.import_data.php`<br />
-- Eg. `require_once 'files/input_types/My_new_input.class.php';`
+ - Eg. `require_once 'files/input_types/My_new_input.class.php';`
 
 **Step 5:** Add your new data type in each stage file
-- Add the new data type name to the "$input_types" array at the top of stage_one.php
-- Add the new data type name and object instantiation to stage_two.php, stage_three.php and stage_four.php<br />
+ - Add the new data type name to the "$input_types" array at the top of stage_one.php
+ - Add the new data type name and object instantiation to stage_two.php, stage_three.php and stage_four.php<br />
    This is in the switch statement in the function defined at the top of each.<br />
    Make sure to assign the object to a variable named `$input_file_obj`
 
@@ -42,8 +42,8 @@ However, you can add your own field types easily, just by creating a PHP functio
 
 **Step 2:** Create a function in this class which will output the POST for your field type.<br />
 **Remember:**
-- This is an array with the field name 'field_id_X' mapped to the data
-- Check is `$this->value` is `NULL` and use the data in `$this->existing` to default
+ - This is an array with the field name 'field_id_X' mapped to the data
+ - Check is `$this->value` is `NULL` and use the data in `$this->existing` to default
 
 **Step 3:** Add your field type function string to the `$supported_types` array mapping to the function you have just created.
 
