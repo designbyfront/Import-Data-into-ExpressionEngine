@@ -14,7 +14,7 @@ Your data may not come in a format supported by this module.<br />
 However, you can create your own data input type easily, just by creating a PHP class.
 
 **Step 1:** Create your new input type PHP class<br />
-The class needs to imlepement 'Input_type' and subsequently should provide four methods:<br />
+The class needs to implement `Input_type` and subsequently should provide four methods:<br />
 `get_headings()`<br />
 &nbsp;&nbsp;&nbsp;open file, read first row (headings), close file, return flat array of headings<br />
 `start_reading_rows()`<br />
@@ -55,6 +55,12 @@ However, you can add your own field types easily, just by creating a PHP functio
 ## Support ##
 
 For more information and support, please use the [issues page](http://github.com/designbyfront/Import-Data into-ExpressionEngine/issues) or contact us at info@designbyfront.com
+
+## License and Attribution ##
+
+This work is licensed under the Creative Commons Attribution-Share Alike 3.0 Unported.
+To view a copy of this license, visit [http://creativecommons.org/licenses/by-sa/3.0/](http://creativecommons.org/licenses/by-sa/3.0/)
+or send a letter to `Creative Commons, 171 Second Street, Suite 300, San Francisco, California, 94105, USA`
 
 ## Created by Front ###
 
