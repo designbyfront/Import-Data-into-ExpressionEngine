@@ -52,12 +52,13 @@
 	$upload_success = false;
 	$target_file = '';
 	if ($_FILES['input_file']['name'] != '') {
-		// Upload directory will be - /ee/{system}/modules/import_data/files/upload_input_files/
+		// Upload directory will be - {system}/modules/import_data/files/upload_input_files/
 		// This directory should have chmod 777 (PHP may not have authority to chmod)
 		$upload_location = substr(__FILE__, 0, strrpos(__FILE__, '/')).'/upload_input_files/';
-		if (!file_exists($upload_location))
+		if (!file_exists($upload_location)) {
 			mkdir($upload_location);
-		chmod($upload_location, 0777);
+			chmod($upload_location, 0777);
+		}
 		$target_file = $upload_location.time().'-'.basename($_FILES['input_file']['name']);
 		$upload_success = move_uploaded_file($_FILES['input_file']['tmp_name'], $target_file);
 		chmod($target_file, 0766);
