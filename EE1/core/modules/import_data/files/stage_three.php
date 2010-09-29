@@ -9,12 +9,6 @@
  *
  *
  * To do:
- *
- *  - Remove PHP warnings for undefined index
- *    Use proper isset
- *     - undefined index:: relation_heading_select, relation_weblog_select, relation_field_select
- *     - bad argument for foreach
- *
  *  - Allow control over entry_date, status, allow_comments of entry
  *
 */
@@ -53,17 +47,22 @@
 			// Relations - need to know which headings in relation_heading_select
 			$input_heading_to_weblog = array();
 			$input_heading_to_field = array();
-			foreach ($data_relations['input_heading'] as $index => $heading) {
-				$heading_pieces = explode('#', $heading);
-				$input_heading_to_weblog[$heading_pieces[0]] = $data_relations['weblog'][$index];
-				$input_heading_to_field[$heading_pieces[0]] = $data_relations['field'][$index];
+			if (!empty($data_relations['input_heading'])) {
+				foreach ($data_relations['input_heading'] as $index => $heading) {
+					$heading_pieces = explode('#', $heading);
+					$input_heading_to_weblog[$heading_pieces[0]] = $data_relations['weblog'][$index];
+					$input_heading_to_field[$heading_pieces[0]] = $data_relations['field'][$index];
+				}
 			}
 
-			// Lookup FF field names
-			$query = $DB->query('SELECT fieldtype_id, class FROM exp_ff_fieldtypes');
+			// Lookup FF field names (check it is intalled first)
+			$query = $DB->query('SHOW tables LIKE \'exp_ff_fieldtypes\'');
 			$ff_fieldtypes = array();
-			foreach ($query->result as $index => $row)
-				$ff_fieldtypes['ftype_id_'.$row['fieldtype_id']] = $row['class'];
+			if (!empty($query->result)) {
+				$query = $DB->query('SELECT fieldtype_id, class FROM exp_ff_fieldtypes');
+				foreach ($query->result as $index => $row)
+					$ff_fieldtypes['ftype_id_'.$row['fieldtype_id']] = $row['class'];
+			}
 
 			$unassigned_input_fields = array();
 			$relations_table  = $DSP->table('', '10', '', '100%');
@@ -96,34 +95,43 @@
 				$field_column_select .= $DSP->input_select_option($index, ++$index.' - '.$heading);
 			$field_column_select .= $DSP->input_select_footer();
 
+	// check if Gypsy is installed and set boolean
+	$query = $DB->query('SELECT class
+											 FROM exp_extensions 
+											 WHERE class = \'Gypsy\'
+											');
+	$gypsy_installed = $query->num_rows > 0;
+
 			// Select normal fields
-			$query = $DB->query('SELECT wf.field_id, wf.field_label, wf.field_name, wf.field_required, wf.field_type, wf.field_is_gypsy
+			$query = $DB->query('SELECT wf.field_id, wf.field_label, wf.field_name, wf.field_required, wf.field_type, '.($gypsy_installed ? 'wf.field_is_gypsy' : '\'n\' as field_is_gypsy').'
 													 FROM exp_weblogs wb, exp_field_groups fg, exp_weblog_fields wf
 													 WHERE wb.site_id = \''.$DB->escape_str($site_id).'\'
 													 AND   wb.site_id = fg.site_id
 													 AND   wb.site_id = wf.site_id
 													 AND   wb.weblog_id = \''.$DB->escape_str($weblog_id).'\'
 													 AND   wb.field_group = fg.group_id
-													 AND   wb.field_group = wf.group_id
-													 AND   wf.field_is_gypsy = \'n\'
-													');
+													 AND   wb.field_group = wf.group_id '.
+													 ($gypsy_installed ? 'AND   wf.field_is_gypsy = \'n\'' : '')
+													);
 			$weblog_fields = $query->result;
 
-			// Select gypsy fields
-			$query = $DB->query('SELECT wf.gypsy_weblogs, wf.field_id, wf.field_name, wf.field_label, wf.field_required, wf.field_type
-													 FROM exp_weblog_fields wf
-													 WHERE wf.site_id = \''.$DB->escape_str($site_id).'\'
-													 AND   wf.field_is_gypsy = \'y\'
-													');
-			foreach($query->result as $row) {
-				$used_by = explode(' ', trim($row['gypsy_weblogs']));
-				if (in_array($weblog_id, $used_by)) {
-					$weblog_fields[] = array('field_id' => $row['field_id'],
-																	'field_label' => $row['field_label'],
-																	'field_name' => $row['field_name'],
-																	'field_required' => $row['field_required'],
-																	'field_type' => $row['field_type'],
-																	'field_is_gypsy' => 'y');
+			if ($gypsy_installed) {
+				// Select gypsy fields
+				$query = $DB->query('SELECT wf.gypsy_weblogs, wf.field_id, wf.field_name, wf.field_label, wf.field_required, wf.field_type
+														 FROM exp_weblog_fields wf
+														 WHERE wf.site_id = \''.$DB->escape_str($site_id).'\'
+														 AND   wf.field_is_gypsy = \'y\'
+														');
+				foreach($query->result as $row) {
+					$used_by = explode(' ', trim($row['gypsy_weblogs']));
+					if (in_array($weblog_id, $used_by)) {
+						$weblog_fields[] = array('field_id' => $row['field_id'],
+																		'field_label' => $row['field_label'],
+																		'field_name' => $row['field_name'],
+																		'field_required' => $row['field_required'],
+																		'field_type' => $row['field_type'],
+																		'field_is_gypsy' => 'y');
+					}
 				}
 			}
 
@@ -177,9 +185,9 @@
 	$input_data_location = $_POST['input_file'];
 	$input_data_hidden = $DSP->input_hidden('input_file', $input_data_location);
 
-	$data_relations = array('input_heading' => $_POST['relation_heading_select'],
-													'weblog' => $_POST['relation_weblog_select'],
-													'field' => $_POST['relation_field_select']);
+	$data_relations = array('input_heading' => (isset($_POST['relation_heading_select']) ? $_POST['relation_heading_select'] : ''),
+													'weblog'        => (isset($_POST['relation_weblog_select'])  ? $_POST['relation_weblog_select'] : ''),
+													'field'         =>  (isset($_POST['relation_field_select'])  ? $_POST['relation_field_select'] : ''));
 
 
 	$DSP->title = $LANG->line('import_data_module_name');

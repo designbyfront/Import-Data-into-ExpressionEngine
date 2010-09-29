@@ -108,8 +108,9 @@ $r = '<script type="text/javascript">
 						array(
 								'action'	=> 'C=modules'.AMP.'M=import_data'.AMP.'P=stage_two', 
 								'method'	=> 'post',
-								'name'	=> 'entryform',
-								'id'		=> 'entryform'
+								'name'		=> 'entryform',
+								'id'			=> 'entryform',
+								'enctype'	=> 'multipart/form-data'
 							 ),
 						array(
 							)

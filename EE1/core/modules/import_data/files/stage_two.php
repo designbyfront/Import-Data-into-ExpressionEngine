@@ -51,11 +51,13 @@
 	// Deal with file input
 	$upload_success = false;
 	if ($_FILES['input_file']['name'] != '') {
-		// Upload directory will be in the /ee/system directory
-		$upload_location = 'upload_input_files';
+		// Upload directory will be - /ee/{system}/modules/import_data/files/upload_input_files/
+		// This directory should have chmod 777 (PHP may not have authority to chmod)
+		$upload_location = substr(__FILE__, 0, strrpos(__FILE__, '/')).'/upload_input_files/';
 		if (!file_exists($upload_location))
 			mkdir($upload_location);
-		$target_file = $upload_location.'/'.time().'-'.basename($_FILES['input_file']['name']);
+		chmod($upload_location, 0777);
+		$target_file = $upload_location.time().'-'.basename($_FILES['input_file']['name']);
 		$upload_success = move_uploaded_file($_FILES['input_file']['tmp_name'], $target_file);
 		chmod($target_file, 0766);
 	}
@@ -74,7 +76,7 @@
 
 	$input_type = $_POST['type_select'];
 	$input_type_hidden = $DSP->input_hidden('type_select', $input_type);
-	$input_data_location = $_SERVER['DOCUMENT_ROOT'].'core/'.$target_file;
+	$input_data_location = $target_file;
 	$input_data_hidden = $DSP->input_hidden('input_file', $input_data_location);
 
 	// -------------------------------------------------------
@@ -171,6 +173,12 @@ $r = '<script type="text/javascript">
 		$relation_weblog_select .= $DSP->input_select_option($row['weblog_id'].'#'.$row['blog_title'].' ['.$row['blog_name'].', '.$row['weblog_id'].']', $row['blog_title'].' ['.$row['blog_name'].', '.$row['weblog_id'].']');
 	$relation_weblog_select .= $DSP->input_select_footer();
 
+	// check if Gypsy is installed and set boolean
+	$query = $DB->query('SELECT class
+											 FROM exp_extensions 
+											 WHERE class = \'Gypsy\'
+											');
+	$gypsy_installed = $query->num_rows > 0;
 
 	// Select normal fields
 	$query = $DB->query('SELECT wb.weblog_id, wf.field_id, wf.field_name, wf.field_label
@@ -179,23 +187,25 @@ $r = '<script type="text/javascript">
 											 AND   wb.site_id = fg.site_id
 											 AND   wb.site_id = wf.site_id
 											 AND   wb.field_group = fg.group_id
-											 AND   wb.field_group = wf.group_id
-											 AND   wf.field_is_gypsy = \'n\'
-											');
+											 AND   wb.field_group = wf.group_id '.
+											 ($gypsy_installed ? 'AND   wf.field_is_gypsy = \'n\'' : '')
+											);
 	$relation_field_select = $DSP->input_select_header('relation_field_select[]');
 	foreach($query->result as $row)
 		$relation_field_select .= $DSP->input_select_option($row['field_id'].'#'.$row['field_label'].' ['.$row['field_name'].']', $LANG->line('import_data_section_select').' '.$row['weblog_id'].' - '.$row['field_label'].' ['.$row['field_name'].']');
 
-	// Select gypsy fields
-	$query = $DB->query('SELECT wf.gypsy_weblogs, wf.field_id, wf.field_name, wf.field_label
-											 FROM exp_weblog_fields wf
-											 WHERE wf.site_id = \''.$DB->escape_str($site_id).'\'
-											 AND   wf.field_is_gypsy = \'y\'
-											');
-	foreach($query->result as $row) {
-		$used_by = explode(' ', trim($row['gypsy_weblogs']));
-		foreach ($used_by as $weblog_id)
-			$relation_field_select .= $DSP->input_select_option($row['field_id'].'#'.$row['field_label'].' ['.$row['field_name'].'] (gypsy)', $LANG->line('import_data_section_select').' '.$weblog_id.' - '.$row['field_label'].' ['.$row['field_name'].'] (gypsy)');
+	if ($gypsy_installed) {
+		// Select gypsy fields
+		$query = $DB->query('SELECT wf.gypsy_weblogs, wf.field_id, wf.field_name, wf.field_label
+												 FROM exp_weblog_fields wf
+												 WHERE wf.site_id = \''.$DB->escape_str($site_id).'\'
+												 AND   wf.field_is_gypsy = \'y\'
+												');
+		foreach($query->result as $row) {
+			$used_by = explode(' ', trim($row['gypsy_weblogs']));
+			foreach ($used_by as $weblog_id)
+				$relation_field_select .= $DSP->input_select_option($row['field_id'].'#'.$row['field_label'].' ['.$row['field_name'].'] (gypsy)', $LANG->line('import_data_section_select').' '.$weblog_id.' - '.$row['field_label'].' ['.$row['field_name'].'] (gypsy)');
+		}
 	}
 
 	$relation_field_select .= $DSP->input_select_footer();
@@ -212,8 +222,8 @@ $r = '<script type="text/javascript">
 							array(
 									'action'	=> 'C=modules'.AMP.'M=import_data'.AMP.'P=stage_three', 
 									'method'	=> 'post',
-									'name'	=> 'entryform',
-									'id'		=> 'entryform'
+									'name'		=> 'entryform',
+									'id'			=> 'entryform'
 								 ),
 							array(
 								)

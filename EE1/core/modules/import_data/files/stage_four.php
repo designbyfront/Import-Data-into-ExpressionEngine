@@ -49,49 +49,63 @@ require_once('classes/field_type.class.php');
 		// Discard the headers
 		$input_file_obj->read_row();
 
-			// Lookup FF field names
-			$query = $DB->query('SELECT fieldtype_id, class FROM exp_ff_fieldtypes');
+			// Lookup FF field names (check it is intalled first)
+			$query = $DB->query('SHOW tables LIKE \'exp_ff_fieldtypes\'');
 			$ff_fieldtypes = array();
+			if (!empty($query->result)) {
+			$query = $DB->query('SELECT fieldtype_id, class FROM exp_ff_fieldtypes');
 			foreach ($query->result as $index => $row)
 				$ff_fieldtypes['ftype_id_'.$row['fieldtype_id']] = $row['class'];
+			}
+
+	// check if Gypsy is installed and set boolean
+	$query = $DB->query('SELECT class
+											 FROM exp_extensions 
+											 WHERE class = \'Gypsy\'
+											');
+	$gypsy_installed = $query->num_rows > 0;
 
 			// Select normal fields
-			$query = $DB->query('SELECT wf.field_id, wf.field_label, wf.field_name, wf.field_required, wf.field_type, wf.field_is_gypsy
+			$query = $DB->query('SELECT wf.field_id, wf.field_label, wf.field_name, wf.field_required, wf.field_type, '.($gypsy_installed ? 'wf.field_is_gypsy' : '\'n\' as field_is_gypsy').'
 													 FROM exp_weblogs wb, exp_field_groups fg, exp_weblog_fields wf
 													 WHERE wb.site_id = \''.$DB->escape_str($site_id).'\'
 													 AND   wb.site_id = fg.site_id
 													 AND   wb.site_id = wf.site_id
 													 AND   wb.weblog_id = \''.$DB->escape_str($weblog_id).'\'
 													 AND   wb.field_group = fg.group_id
-													 AND   wb.field_group = wf.group_id
-													 AND   wf.field_is_gypsy = \'n\'
-													');
+													 AND   wb.field_group = wf.group_id '.
+													 ($gypsy_installed ? 'AND   wf.field_is_gypsy = \'n\'' : '')
+													);
 			$weblog_fields = $query->result;
 			unset($query);
 
-			// Select gypsy fields
-			$query = $DB->query('SELECT wf.gypsy_weblogs, wf.field_id, wf.field_name, wf.field_label, wf.field_required, wf.field_type
-													 FROM exp_weblog_fields wf
-													 WHERE wf.site_id = \''.$DB->escape_str($site_id).'\'
-													 AND   wf.field_is_gypsy = \'y\'
-													');
-			foreach($query->result as $row) {
-				$used_by = explode(' ', trim($row['gypsy_weblogs']));
-				if (in_array($weblog_id, $used_by)) {
-					$weblog_fields[] = array('field_id' => $row['field_id'],
-																	'field_label' => $row['field_label'],
-																	'field_name' => $row['field_name'],
-																	'field_required' => $row['field_required'],
-																	'field_type' => $row['field_type'],
-																	'field_is_gypsy' => 'y');
+			if ($gypsy_installed) {
+				// Select gypsy fields
+				$query = $DB->query('SELECT wf.gypsy_weblogs, wf.field_id, wf.field_name, wf.field_label, wf.field_required, wf.field_type
+														 FROM exp_weblog_fields wf
+														 WHERE wf.site_id = \''.$DB->escape_str($site_id).'\'
+														 AND   wf.field_is_gypsy = \'y\'
+														');
+				foreach($query->result as $row) {
+					$used_by = explode(' ', trim($row['gypsy_weblogs']));
+					if (in_array($weblog_id, $used_by)) {
+						$weblog_fields[] = array('field_id' => $row['field_id'],
+																		'field_label' => $row['field_label'],
+																		'field_name' => $row['field_name'],
+																		'field_required' => $row['field_required'],
+																		'field_type' => $row['field_type'],
+																		'field_is_gypsy' => 'y');
+					}
 				}
+				unset($query);
 			}
-			unset($query);
+
 //echo'<pre>';
 //var_dump($weblog_fields);
 //var_dump($field_column_mapping);
 //echo'</pre>';
 //echo "\n<br />2 - Start File Memory: ".memory_get_usage(true)."<br /><br />\n\n";
+		$output = '';
 		$submitted_entries = 0;
 		$entry_number = 0;
 		while (($input_row = $input_file_obj->read_row()) !== FALSE) {
@@ -131,7 +145,7 @@ require_once('classes/field_type.class.php');
 				$query = $DB->query($query);
 				$existing_entry = $query->result;
 				unset($query);
-				if ($existing_entry !== NULL) {
+				if ($existing_entry !== NULL && isset($existing_entry[0])) {
 					$existing_entry = $existing_entry[0];
 					$post_data["entry_id"] = $existing_entry["entry_id"];
 					if ($input_row[$field_column_mapping[0]] === NULL)
@@ -235,7 +249,7 @@ require_once('classes/field_type.class.php');
 
 	$unique_columns = $current_post['unique'];
 	$field_column_mapping = $current_post['field_column_select'];
-	$column_field_replationship = $current_post['column_field_relation'];
+	$column_field_replationship = (isset($current_post['column_field_relation']) ? $current_post['column_field_relation'] : '');
 
 	// Set global value for input_loader extension to retain control from EE
 	$GLOBALS['input_loader_end_submit_new_form'] = true;
