@@ -50,6 +50,7 @@
 
 	// Deal with file input
 	$upload_success = false;
+	$target_file = '';
 	if ($_FILES['input_file']['name'] != '') {
 		// Upload directory will be - /ee/{system}/modules/import_data/files/upload_input_files/
 		// This directory should have chmod 777 (PHP may not have authority to chmod)
