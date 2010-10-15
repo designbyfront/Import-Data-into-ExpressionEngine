@@ -193,8 +193,14 @@ $r = '<script type="text/javascript">
 											 ($gypsy_installed ? 'AND   wf.field_is_gypsy = \'n\'' : '')
 											);
 	$relation_field_select = $DSP->input_select_header('relation_field_select[]');
-	foreach($query->result as $row)
+	$last_weblog_id = 0;
+	foreach($query->result as $row) {
+		if ($last_weblog_id != $row['weblog_id']) {
+			$last_weblog_id = $row['weblog_id'];
+			$relation_field_select .= $DSP->input_select_option('0#Title [title]', $LANG->line('import_data_section_select').' '.$row['weblog_id'].' - Title [title]');
+		}
 		$relation_field_select .= $DSP->input_select_option($row['field_id'].'#'.$row['field_label'].' ['.$row['field_name'].']', $LANG->line('import_data_section_select').' '.$row['weblog_id'].' - '.$row['field_label'].' ['.$row['field_name'].']');
+	}
 
 	if ($gypsy_installed) {
 		// Select gypsy fields
@@ -265,7 +271,7 @@ $r = '<script type="text/javascript">
 
 			$r .= $DSP->table_c();
 
-			$r .= $DSP->qdiv('\' id=\'add_relationship\' colspan=\'2\' style=\'padding-left: 8%; padding-top: 2em; ', $LANG->line('import_data_stage2_add_relationship_link'));
+			$r .= $DSP->qdiv('\' id=\'add_relationship\' style=\'padding-left: 8%; padding-top: 2em; ', $LANG->line('import_data_stage2_add_relationship_link'));
 
 		} else {
 			$r .= $DSP->qdiv('itemWrapper', $LANG->line('import_data_stage2_relationship_n'));

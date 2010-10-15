@@ -73,6 +73,9 @@ class Submission {
 
 
 	private function enter_data() {
+		// Uncomment to prevent submission of data when testing
+		//return FALSE;
+
 		global $IN;
 
 		// Populate the $IN variable with the POST

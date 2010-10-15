@@ -64,6 +64,9 @@ $L = array(
 'import_data_form_continue' =>
 'Continue',
 
+'import_data_form_publish' =>
+'Publish',
+
 'import_data_input_field_select' =>
 'Input data field',
 

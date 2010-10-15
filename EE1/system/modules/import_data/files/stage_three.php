@@ -95,12 +95,12 @@
 				$field_column_select .= $DSP->input_select_option($index, ++$index.' - '.$heading);
 			$field_column_select .= $DSP->input_select_footer();
 
-	// check if Gypsy is installed and set boolean
-	$query = $DB->query('SELECT class
-											 FROM exp_extensions 
-											 WHERE class = \'Gypsy\'
-											');
-	$gypsy_installed = $query->num_rows > 0;
+			// check if Gypsy is installed and set boolean
+			$query = $DB->query('SELECT class
+													 FROM exp_extensions 
+													 WHERE class = \'Gypsy\'
+													');
+			$gypsy_installed = $query->num_rows > 0;
 
 			// Select normal fields
 			$query = $DB->query('SELECT wf.field_id, wf.field_label, wf.field_name, wf.field_required, wf.field_type, '.($gypsy_installed ? 'wf.field_is_gypsy' : '\'n\' as field_is_gypsy').'
@@ -135,13 +135,21 @@
 				}
 			}
 
-			$form_table .= $DSP->table('', '10', '', '100%');
+			// Hard code title and category as they are universal and not "real" fields
+			$form_table .= $DSP->table('\' id=\'field_list', '10', '', '100%');
 			$form_table .= $DSP->tr()
 									.  $DSP->table_qcell('', '*', '1%')
 									.  $DSP->table_qcell('itemTitle', 'Title', '20%')
-									.  $DSP->table_qcell('', '[title] text', '15%');
-			$form_table .= $DSP->table_qcell('', $field_column_select, '10%');
-			$form_table .= $DSP->table_qcell('', $DSP->input_checkbox('unique[]\' id=\'unique_title', 0).' <label for="unique_title">'.$LANG->line('import_data_unique_field').'</label>') // unique checkbox
+									.  $DSP->table_qcell('', '[title] text', '15%')
+									.  $DSP->table_qcell('', $field_column_select, '10%')
+									.  $DSP->table_qcell('', $DSP->input_checkbox('unique[]\' id=\'unique_title', 0).' <label for="unique_title">'.$LANG->line('import_data_unique_field').'</label>') // unique checkbox
+									.  $DSP->tr_c();
+			$form_table .= $DSP->tr()
+									.  $DSP->table_qcell('', '', '1%')
+									.  $DSP->table_qcell('itemTitle', 'Category', '20%')
+									.  $DSP->table_qcell('', '[category] category', '15%')
+									.  $DSP->table_qcell('', $field_column_select, '10%')
+									.  $DSP->table_qcell('', '---') // no unique category
 									.  $DSP->tr_c();
 			foreach($weblog_fields as $index => $row) {
 				$field_title = $row['field_label'];
@@ -197,12 +205,21 @@
 														 $LANG->line('import_data_module_name'));
 	$DSP->crumb .= $DSP->crumb_item($LANG->line('import_data_stage3'));
 
-	$form_submit = $DSP->input_submit($LANG->line('import_data_form_continue'));
+	$form_submit = $DSP->input_submit($LANG->line('import_data_form_publish'));
 
 	// -------------------------------------------------------
 	//  Page Heading
 	// -------------------------------------------------------
-	$r  = $DSP->heading($LANG->line('import_data_stage3_heading'));
+	$r  = '<script type="text/javascript">
+	$(document).ready(function(){
+		$("#field_list").css("border-collapse", "collapse");
+		$("#field_list td").css({"padding-bottom": "5px", "padding-top": "5px"});
+		$("#field_list tr td:first").css({"padding-left": "10px", "padding-right": "10px", "font-weight": "bold"});
+		$("#field_list tr:even").css("background-color", "#EDEDED");
+	});
+</script>';
+
+	$r .= $DSP->heading($LANG->line('import_data_stage3_heading'));
 
 	$r .= $DSP->qdiv('itemWrapper', $LANG->line('import_data_stage3_input_success'));
 

@@ -16,7 +16,7 @@
  *
 */
 
-	global $DSP, $LANG, $DB, $FNS;
+	global $DSP, $LANG, $DB, $FNS, $SESS;
 
 	$input_types = array(
                         'CSV' => 'CSV',
@@ -78,10 +78,20 @@ $r = '<script type="text/javascript">
 		//	$("select[name=type_select]").removeAttr("disabled");
 		}
 
+		function preselect_site(site_id) {
+			$("select[name=site_select] option").each(function() {
+				if (($(this).val().split("#"))[0] == site_id) {
+					$(this).attr("selected","selected");
+					nice_weblog_select( $("select[name=site_select]").val() );
+				}
+			});
+		}
+
 		grab_weblog_select();
 		nice_weblog_select( $($("select[name=site_select]").get(0)).val() );
 		disable_site_select();
 		disable_type_select();
+		preselect_site('.$SESS->userdata['site_id'].');
 
 
 		$("select[name=site_select]").change(function() {

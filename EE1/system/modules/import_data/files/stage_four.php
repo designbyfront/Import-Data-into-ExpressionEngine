@@ -17,6 +17,10 @@ require_once('classes/field_type.class.php');
 	global $DSP, $LANG, $DB, $FNS;
 
 	function insert_data($site_id, $weblog_id, $input_data_type, $input_data_location, $unique_columns, $field_column_mapping, $column_field_replationship) {
+
+		// Number of hard coded EE fields (title, category)
+		$num_ee_special_fields = 2;
+
 		//echo "\n<br />1 - Function Memory: ".memory_get_usage(true)."<br /><br />\n\n";
 		global $LANG, $DSP, $DB;
 		$added_entry_ids = array();
@@ -44,61 +48,61 @@ require_once('classes/field_type.class.php');
 		$unique_columns_count = count($unique_columns);
 
 		if ($input_file_obj->start_reading_rows() === FALSE)
-			return $LANG->line('import_data_error_input_type').' ('.$input_data_location.')';
+			return $LANG->line('import_data_error_input_type').' ['.$input_data_location.']';
 
 		// Discard the headers
 		$input_file_obj->read_row();
 
-			// Lookup FF field names (check it is intalled first)
-			$query = $DB->query('SHOW tables LIKE \'exp_ff_fieldtypes\'');
-			$ff_fieldtypes = array();
-			if (!empty($query->result)) {
+		// Lookup FF field names (check it is intalled first)
+		$query = $DB->query('SHOW tables LIKE \'exp_ff_fieldtypes\'');
+		$ff_fieldtypes = array();
+		if (!empty($query->result)) {
 			$query = $DB->query('SELECT fieldtype_id, class FROM exp_ff_fieldtypes');
 			foreach ($query->result as $index => $row)
 				$ff_fieldtypes['ftype_id_'.$row['fieldtype_id']] = $row['class'];
-			}
+		}
 
-	// check if Gypsy is installed and set boolean
-	$query = $DB->query('SELECT class
-											 FROM exp_extensions 
-											 WHERE class = \'Gypsy\'
-											');
-	$gypsy_installed = $query->num_rows > 0;
+		// check if Gypsy is installed and set boolean
+		$query = $DB->query('SELECT class
+												 FROM exp_extensions 
+												 WHERE class = \'Gypsy\'
+												');
+		$gypsy_installed = $query->num_rows > 0;
 
-			// Select normal fields
-			$query = $DB->query('SELECT wf.field_id, wf.field_label, wf.field_name, wf.field_required, wf.field_type, '.($gypsy_installed ? 'wf.field_is_gypsy' : '\'n\' as field_is_gypsy').'
-													 FROM exp_weblogs wb, exp_field_groups fg, exp_weblog_fields wf
-													 WHERE wb.site_id = \''.$DB->escape_str($site_id).'\'
-													 AND   wb.site_id = fg.site_id
-													 AND   wb.site_id = wf.site_id
-													 AND   wb.weblog_id = \''.$DB->escape_str($weblog_id).'\'
-													 AND   wb.field_group = fg.group_id
-													 AND   wb.field_group = wf.group_id '.
-													 ($gypsy_installed ? 'AND   wf.field_is_gypsy = \'n\'' : '')
-													);
-			$weblog_fields = $query->result;
-			unset($query);
+		// Select normal fields
+		$query = $DB->query('SELECT wf.field_id, wf.field_label, wf.field_name, wf.field_required, wf.field_type, '.($gypsy_installed ? 'wf.field_is_gypsy' : '\'n\' as field_is_gypsy').'
+												 FROM exp_weblogs wb, exp_field_groups fg, exp_weblog_fields wf
+												 WHERE wb.site_id = \''.$DB->escape_str($site_id).'\'
+												 AND   wb.site_id = fg.site_id
+												 AND   wb.site_id = wf.site_id
+												 AND   wb.weblog_id = \''.$DB->escape_str($weblog_id).'\'
+												 AND   wb.field_group = fg.group_id
+												 AND   wb.field_group = wf.group_id '.
+												 ($gypsy_installed ? 'AND   wf.field_is_gypsy = \'n\'' : '')
+												);
+		$weblog_fields = $query->result;
+		unset($query);
 
-			if ($gypsy_installed) {
-				// Select gypsy fields
-				$query = $DB->query('SELECT wf.gypsy_weblogs, wf.field_id, wf.field_name, wf.field_label, wf.field_required, wf.field_type
-														 FROM exp_weblog_fields wf
-														 WHERE wf.site_id = \''.$DB->escape_str($site_id).'\'
-														 AND   wf.field_is_gypsy = \'y\'
-														');
-				foreach($query->result as $row) {
-					$used_by = explode(' ', trim($row['gypsy_weblogs']));
-					if (in_array($weblog_id, $used_by)) {
-						$weblog_fields[] = array('field_id' => $row['field_id'],
-																		'field_label' => $row['field_label'],
-																		'field_name' => $row['field_name'],
-																		'field_required' => $row['field_required'],
-																		'field_type' => $row['field_type'],
-																		'field_is_gypsy' => 'y');
-					}
+		if ($gypsy_installed) {
+			// Select gypsy fields
+			$query = $DB->query('SELECT wf.gypsy_weblogs, wf.field_id, wf.field_name, wf.field_label, wf.field_required, wf.field_type
+													 FROM exp_weblog_fields wf
+													 WHERE wf.site_id = \''.$DB->escape_str($site_id).'\'
+													 AND   wf.field_is_gypsy = \'y\'
+													');
+			foreach($query->result as $row) {
+				$used_by = explode(' ', trim($row['gypsy_weblogs']));
+				if (in_array($weblog_id, $used_by)) {
+					$weblog_fields[] = array('field_id' => $row['field_id'],
+																	'field_label' => $row['field_label'],
+																	'field_name' => $row['field_name'],
+																	'field_required' => $row['field_required'],
+																	'field_type' => $row['field_type'],
+																	'field_is_gypsy' => 'y');
 				}
-				unset($query);
 			}
+			unset($query);
+		}
 
 //echo'<pre>';
 //var_dump($weblog_fields);
@@ -138,12 +142,14 @@ require_once('classes/field_type.class.php');
 					if ($unique_column === "0")
 						$query .=  '		AND   wt.title = \''.$DB->escape_str($input_row[$field_column_mapping[0]]).'\'';
 					else
-						$query .=  '		AND   wd.field_id_'.$DB->escape_str($weblog_fields[$unique_column-1]['field_id']).' = \''.$DB->escape_str($input_row[$field_column_mapping[$unique_column]]).'\'';
+						$query .=  '		AND   wd.field_id_'.$DB->escape_str($weblog_fields[$unique_column-1]['field_id']).' = \''.$DB->escape_str($input_row[$field_column_mapping[$unique_column+($num_ee_special_fields-1)]]).'\'';
 				}
+
 				$query .= '				 LIMIT 1';
 				//echo $query."<br /><br />\n";
 				$query = $DB->query($query);
 				$existing_entry = $query->result;
+				//var_dump($existing_entry);
 				unset($query);
 				if ($existing_entry !== NULL && isset($existing_entry[0])) {
 					$existing_entry = $existing_entry[0];
@@ -154,26 +160,59 @@ require_once('classes/field_type.class.php');
 			}
 			//echo "\n<br />&nbsp;&nbsp;&nbsp;2A - Unique Check Memory: ".memory_get_usage(true)."<br />\n";
 
+			$post_data["category"] = array();
+			if (!empty($post_data["entry_id"]) && $post_data["entry_id"] !== 0 && in_array($post_data["entry_id"], $added_entry_ids) && $input_row[$field_column_mapping[1]] !== '') {
+				$query = 'SELECT cat_id
+									FROM exp_category_posts
+									WHERE entry_id = '.$DB->escape_str($post_data["entry_id"]);
+				$query = $DB->query($query);
+				$existing_category_ids = $query->result;
+				$post_data["category"] = array_values($existing_category_ids[0]);
+			}
+			if (isset($input_row[$field_column_mapping[1]])) {
+				$query = 'SELECT ct.cat_id
+									FROM exp_weblogs wb, exp_category_groups cg, exp_categories ct
+									WHERE wb.cat_group = cg.group_id
+									AND   wb.weblog_id = '.$weblog_id.'
+									AND   cg.site_id = '.$DB->escape_str($site_id).'
+									AND   ct.group_id = cg.group_id
+									AND   ct.site_id = '.$DB->escape_str($site_id).'
+									AND   ct.cat_name = "'.$DB->escape_str($input_row[$field_column_mapping[1]]).'"';
+				//echo $query;
+				$query = $DB->query($query);
+				$category_id = $query->result;
+				if ($query->num_rows > 0)
+					$post_data["category"] = array_unique(array_merge($post_data["category"], array_values($category_id[0])));
+			}
+
 			$invalid_input = FALSE;
 			foreach ($field_column_mapping as $index => $field_id) {
-				// ignore title
-				if ($index == 0) continue;
-				$index--;
+				// Ignore hard coded EE fields (title, category)
+				if ($index < $num_ee_special_fields) continue;
+				$index -= $num_ee_special_fields;
 
 				// Translate ftype_id_X into field type name
 				if (substr($weblog_fields[$index]['field_type'], 0, 9) == 'ftype_id_')
 					$weblog_fields[$index]['field_type'] = $ff_fieldtypes[$weblog_fields[$index]['field_type']];
 
 				// Create post data from field_type class
-				$field_type_object = new Field_Type($index, $field_id, $site_id, $weblog_id, $weblog_fields[$index], $input_row[$field_id], $existing_entry, $added_entry_ids, $column_field_replationship);
-				if (($field_post = $field_type_object->post_value()) === FALSE)
+				$field_type_object = new Field_Type($index,
+																						$field_id,
+																						$site_id,
+																						$weblog_id,
+																						$weblog_fields[$index],
+																						(isset($input_row[$field_id]) ? $input_row[$field_id] : ''),
+																						$existing_entry,
+																						$added_entry_ids,
+																						$column_field_replationship);
+				if (($field_post = $field_type_object->post_value()) === FALSE && $weblog_fields[$index]['field_required'] == 'y')
 					return $LANG->line('import_data_stage4_missing_fieldtype_1').$weblog_fields[$index]['field_type'].$LANG->line('import_data_stage4_missing_fieldtype_2');
+				else if ($field_post === FALSE)
+					$field_post['field_id_'.$weblog_fields[$index]['field_id']] = '';
 
 				unset($field_type_object);
 
 				if ($weblog_fields[$index]['field_required'] == 'y') {
-					// ALSO CHECK IF TITLE NULL SOMEWHERE?
-					
 					foreach ($field_post as $check_data) {
 						if (empty($check_data))
 							$invalid_input = TRUE;

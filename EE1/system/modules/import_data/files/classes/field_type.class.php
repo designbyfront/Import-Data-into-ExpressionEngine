@@ -65,8 +65,9 @@ class Field_type {
 	}
 
 	public function post_value() {
-		if (method_exists($this, $this->supported_types[$this->field['field_type']]))
-			return $this->{$this->supported_types[$this->field['field_type']]}();
+		if (isset($this->supported_types[$this->field['field_type']]))
+			if (method_exists($this, $this->supported_types[$this->field['field_type']]))
+				return $this->{$this->supported_types[$this->field['field_type']]}();
 		return false;
 	}
 
@@ -74,8 +75,11 @@ class Field_type {
 // ---- Supported Field Type Functions ------
 
 	private function post_data_text() {
-		if ($this->value === NULL)
-			$this->value = $this->existing['field_id_'.$this->field['field_id']];
+		if ($this->value === NULL || $this->value === '')
+			if (isset($this->existing['field_id_'.$this->field['field_id']]))
+				$this->value = $this->existing['field_id_'.$this->field['field_id']];
+			else
+				$this->value = '';
 		return array('field_id_'.$this->field['field_id'] => $this->value);
 	}
 
@@ -94,8 +98,11 @@ class Field_type {
 
 
 	private function post_data_date() {
-		if ($this->value === NULL)
-			$this->value = $this->existing['field_id_'.$this->field['field_id']];
+		if ($this->value === NULL || $this->value === '')
+			if (isset($this->existing['field_id_'.$this->field['field_id']]))
+				$this->value = $this->existing['field_id_'.$this->field['field_id']];
+			else
+				$this->value = '';
 		return array('field_id_'.$this->field['field_id'] => date("Y-m-d H:i A", strtotime($this->value)));
 	}
 
@@ -104,7 +111,7 @@ class Field_type {
 	private function post_data_rel() {
 		global $DB;
 
-		if ($this->value === NULL)
+		if ($this->value === NULL || $this->value === '')
 			return array('field_id_'.$this->field['field_id'] => $this->existing['field_id_'.$this->field['field_id']]);
 		if (!isset($this->relationships[$this->field_id]))
 			return array();
@@ -161,7 +168,7 @@ class Field_type {
 			return array('field_id_'.$this->field['field_id'] => array());
 
 		$previous_entries = array(0 => '');
-		preg_match_all('/\[([0-9]+?)\]/', $this->existing['field_id_'.$this->field['field_id']], $matches);
+		preg_match_all('/\[([0-9]+?)\]/', (isset($this->existing['field_id_'.$this->field['field_id']]) ? $this->existing['field_id_'.$this->field['field_id']] : ''), $matches);
 		if (!empty($matches[1])) {
 			$current_relations = $matches[1];
 			// Convert relations into entry IDs
@@ -177,26 +184,35 @@ class Field_type {
 		}
 
 		// If given no value, send existing
-		if ($this->value === NULL)
+		if ($this->value === NULL || $this->value === '')
 			return array('field_id_'.$this->field['field_id'] => array('old' => '', 'selections' => $previous_entries));
 
 		// If given value and not already updated, overwrite previous_entries
-		if (!in_array($this->existing['entry_id'], $this->added_ids))
+		if (isset($this->existing['entry_id']) && !in_array($this->existing['entry_id'], $this->added_ids))
 			$previous_entries = array(0 => '');
 
 		$pieces = explode('#', $this->relationships[$this->field_id]);
-		$query = 'SELECT entry_id, field_id_'.$DB->escape_str($this->field['field_id']).'
-							FROM exp_weblog_data
-							WHERE site_id = '.$DB->escape_str($this->site_id).'
-							AND   weblog_id = '.$DB->escape_str($pieces[0]).'
-							AND   field_id_'.$DB->escape_str($pieces[1]).' = \''.$DB->escape_str($this->value).'\'
-							LIMIT 1';
+		// If $pieces[1] is 0, we have selected a title
+		if ($pieces[1] == 0) {
+			$query = 'SELECT entry_id, title as field_id_'.$DB->escape_str($this->field['field_id']).'
+								FROM exp_weblog_titles
+								WHERE site_id = '.$DB->escape_str($this->site_id).'
+								AND   weblog_id = '.$DB->escape_str($pieces[0]).'
+								AND   title = \''.$DB->escape_str($this->value).'\'
+								LIMIT 1';
+		} else {
+			$query = 'SELECT entry_id, field_id_'.$DB->escape_str($this->field['field_id']).'
+								FROM exp_weblog_data
+								WHERE site_id = '.$DB->escape_str($this->site_id).'
+								AND   weblog_id = '.$DB->escape_str($pieces[0]).'
+								AND   field_id_'.$DB->escape_str($pieces[1]).' = \''.$DB->escape_str($this->value).'\'
+								LIMIT 1';
+		}
 		//echo "<br />\n".$query."<br /><br />\n";
 		$query = $DB->query($query);
 		$existing_entry = $query->result;
-		$existing_entry = $existing_entry[0];
-
-		$previous_entries[] = $existing_entry['entry_id'];
+		if (isset($existing_entry[0]['entry_id']))
+			$previous_entries[] = $existing_entry[0]['entry_id'];
 		$previous_entries = array_unique($previous_entries);
 
 		return array('field_id_'.$this->field['field_id'] => array('old' => '', 'selections' => $previous_entries));
@@ -205,15 +221,18 @@ class Field_type {
 
 
 	private function post_data_ff_checkbox() {
-		if ($this->value === NULL)
-			$this->value = $this->existing['field_id_'.$this->field['field_id']];
+		if ($this->value === NULL || $this->value === '')
+			if (isset($this->existing['field_id_'.$this->field['field_id']]))
+				$this->value = $this->existing['field_id_'.$this->field['field_id']];
+			else
+				$this->value = '';
 
 		// Convert possible input to boolean
 		$positive = array('yes', 'y', 'true',  'on');
 		$negative = array('no',  'n', 'false', 'off');
 		if (in_array($this->value, $positive))
 			$this->value = TRUE;
-		else if (in_array($this->value, $negaive))
+		else if (in_array($this->value, $negative))
 			$this->value = FALSE;
 		else
 			$this->value = (bool)$this->value;
@@ -224,7 +243,7 @@ class Field_type {
 
 
 	private function post_data_wygwam() {
-		if ($this->value === NULL)
+		if ($this->value === NULL || $this->value === '')
 			$this->value = $this->existing['field_id_'.$this->field['field_id']];
 		$data_array = array('old' => $this->existing['field_id_'.$this->field['field_id']],
 												 'new' => $this->value);
