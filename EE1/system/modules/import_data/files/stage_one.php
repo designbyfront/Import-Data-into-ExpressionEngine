@@ -6,12 +6,6 @@
  *
  *
  * To do:
- *
- *  - Get site_id from session -> set select option to this site id!
- *    Use:
- *       global $SESS;
- *       $SESS->userdata['site_id']
- *
  *  - Select previously uploaded file
  *
 */
