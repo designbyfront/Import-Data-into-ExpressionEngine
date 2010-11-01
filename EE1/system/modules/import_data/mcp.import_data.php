@@ -44,7 +44,7 @@ require_once 'files/input_types/Csv_file.class.php';
 class Import_data_CP
 {
 
-	var $version = '1.2';
+	var $version = '1.3';
 
 	function Import_data_CP( $switch = TRUE )
 	{

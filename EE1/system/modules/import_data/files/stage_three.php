@@ -87,13 +87,10 @@
 				$form_table .= $relations_table;
 			}
 
-			$field_column_select = $DSP->input_select_header('field_column_select[]');
-			$field_column_select .= $DSP->input_select_option('', '- '.$LANG->line('import_data_default_select').' -');
-
+			$field_column_select_populate = $DSP->input_select_option('', '- '.$LANG->line('import_data_default_select').' -', 'y');
 			//foreach ($unassigned_input_fields as $index => $heading)
 			foreach ($headings as $index => $heading)
-				$field_column_select .= $DSP->input_select_option($index, ++$index.' - '.$heading);
-			$field_column_select .= $DSP->input_select_footer();
+				$field_column_select_populate .= $DSP->input_select_option($index, ++$index.' - '.$heading);
 
 			// check if Gypsy is installed and set boolean
 			$query = $DB->query('SELECT class
@@ -141,19 +138,19 @@
 									.  $DSP->table_qcell('', '*', '1%')
 									.  $DSP->table_qcell('itemTitle', 'Title', '20%')
 									.  $DSP->table_qcell('', '[title] text', '15%')
-									.  $DSP->table_qcell('', $field_column_select, '10%')
+									.  $DSP->table_qcell('', $DSP->input_select_header('field_column_select[0]').$field_column_select_populate.$DSP->input_select_footer(), '10%')
 									.  $DSP->table_qcell('', $DSP->input_checkbox('unique[]\' id=\'unique_title', 0).' <label for="unique_title">'.$LANG->line('import_data_unique_field').'</label>') // unique checkbox
 									.  $DSP->tr_c();
 			$form_table .= $DSP->tr()
 									.  $DSP->table_qcell('', '', '1%')
 									.  $DSP->table_qcell('itemTitle', 'Category', '20%')
 									.  $DSP->table_qcell('', '[category] category', '15%')
-									.  $DSP->table_qcell('', $field_column_select, '10%')
+									.  $DSP->table_qcell('', $DSP->input_select_header('field_column_select[1][]', 'y', '4', '85%').$field_column_select_populate.$DSP->input_select_footer(), '10%')
 									.  $DSP->table_qcell('', '---') // no unique category
 									.  $DSP->tr_c();
+			$i = 2;
 			foreach($weblog_fields as $index => $row) {
 				$field_title = $row['field_label'];
-
 				// Translate ftype_id_X into field type name
 				if (substr($row['field_type'], 0, 9) == 'ftype_id_')
 					$row['field_type'] = $ff_fieldtypes[$row['field_type']];
@@ -166,9 +163,10 @@
 										.  $DSP->table_qcell('', $field_required, '1%')
 										.  $DSP->table_qcell('itemTitle', $field_title, '20%')
 										.  $DSP->table_qcell('', $field_text, '10%')
-										.  $DSP->table_qcell('', $field_column_select, '10%')
+										.  $DSP->table_qcell('', $DSP->input_select_header('field_column_select['.$i.']').$field_column_select_populate.$DSP->input_select_footer(), '10%')
 										.  $DSP->table_qcell('', $unique_checkbox.' <label for="unique_'.$index.'">'.$LANG->line('import_data_unique_field').'</label>') // unique checkbox
 										.  $DSP->tr_c();
+				$i++;
 			}
 			$form_table .= $DSP->table_c();
 
@@ -176,7 +174,6 @@
 		return $form_table;
 
 	}
-
 
 	$site_data = explode('#', $_POST['site_select']);
 	$site_data_hidden = $DSP->input_hidden('site_select', $_POST['site_select']);

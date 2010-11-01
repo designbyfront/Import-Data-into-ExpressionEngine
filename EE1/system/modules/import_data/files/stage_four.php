@@ -11,6 +11,11 @@
  *
 */
 
+//echo '<pre>';
+//var_dump($_POST);
+//echo '</pre>';
+//die();
+
 require_once('classes/submission.class.php');
 require_once('classes/field_type.class.php');
 
@@ -112,6 +117,11 @@ require_once('classes/field_type.class.php');
 		$output = '';
 		$submitted_entries = 0;
 		$entry_number = 0;
+
+		$notifications = '';
+		$log_notifications = array();
+		$notifications_count = 0;
+
 		while (($input_row = $input_file_obj->read_row()) !== FALSE) {
 			// Construct row POST call
 			$post_data = array();
@@ -146,7 +156,7 @@ require_once('classes/field_type.class.php');
 				}
 
 				$query .= '				 LIMIT 1';
-				//echo $query."<br /><br />\n";
+				//$query."<br />\n"
 				$query = $DB->query($query);
 				$existing_entry = $query->result;
 				//var_dump($existing_entry);
@@ -161,28 +171,34 @@ require_once('classes/field_type.class.php');
 			//echo "\n<br />&nbsp;&nbsp;&nbsp;2A - Unique Check Memory: ".memory_get_usage(true)."<br />\n";
 
 			$post_data["category"] = array();
-			if (!empty($post_data["entry_id"]) && $post_data["entry_id"] !== 0 && in_array($post_data["entry_id"], $added_entry_ids) && $input_row[$field_column_mapping[1]] !== '') {
+			if (!empty($post_data["entry_id"]) && $post_data["entry_id"] !== 0 && in_array($post_data["entry_id"], $added_entry_ids)) {
 				$query = 'SELECT cat_id
 									FROM exp_category_posts
 									WHERE entry_id = '.$DB->escape_str($post_data["entry_id"]);
 				$query = $DB->query($query);
 				$existing_category_ids = $query->result;
-				$post_data["category"] = array_values($existing_category_ids[0]);
+				foreach ($existing_category_ids as $category_id) {
+					$post_data["category"][] = $category_id['cat_id'];
+				}
 			}
-			if (isset($input_row[$field_column_mapping[1]])) {
-				$query = 'SELECT ct.cat_id
-									FROM exp_weblogs wb, exp_category_groups cg, exp_categories ct
-									WHERE wb.cat_group = cg.group_id
-									AND   wb.weblog_id = '.$weblog_id.'
-									AND   cg.site_id = '.$DB->escape_str($site_id).'
-									AND   ct.group_id = cg.group_id
-									AND   ct.site_id = '.$DB->escape_str($site_id).'
-									AND   ct.cat_name = "'.$DB->escape_str($input_row[$field_column_mapping[1]]).'"';
-				//echo $query;
-				$query = $DB->query($query);
-				$category_id = $query->result;
-				if ($query->num_rows > 0)
-					$post_data["category"] = array_unique(array_merge($post_data["category"], array_values($category_id[0])));
+			if (!empty($field_column_mapping[1])) {
+				foreach($field_column_mapping[1] as $category) {
+					if (isset($input_row[$category]) && (!empty($input_row[$category]) || $input_row[$category] === 0)) {
+						$query = 'SELECT ct.cat_id
+											FROM exp_weblogs wb, exp_category_groups cg, exp_categories ct
+											WHERE wb.cat_group = cg.group_id
+											AND   wb.weblog_id = '.$weblog_id.'
+											AND   cg.site_id = '.$DB->escape_str($site_id).'
+											AND   ct.group_id = cg.group_id
+											AND   ct.site_id = '.$DB->escape_str($site_id).'
+											AND   ct.cat_name = "'.$DB->escape_str($input_row[$category]).'"';
+						//echo $query."<br />\n";
+						$query = $DB->query($query);
+						$category_id = $query->result;
+						if ($query->num_rows > 0)
+							$post_data["category"] = array_unique(array_merge($post_data["category"], array_values($category_id[0])));
+					}
+				}
 			}
 
 			$invalid_input = FALSE;
@@ -205,16 +221,25 @@ require_once('classes/field_type.class.php');
 																						$existing_entry,
 																						$added_entry_ids,
 																						$column_field_replationship);
-				if (($field_post = $field_type_object->post_value()) === FALSE && $weblog_fields[$index]['field_required'] == 'y')
+				if (($field_post = $field_type_object->post_value()) === FALSE && $weblog_fields[$index]['field_required'] == 'y') {
 					return $LANG->line('import_data_stage4_missing_fieldtype_1').$weblog_fields[$index]['field_type'].$LANG->line('import_data_stage4_missing_fieldtype_2');
-				else if ($field_post === FALSE)
+				} else if ($field_post === FALSE) {
+					$notification = '<li>'.$LANG->line('import_data_stage4_notification_fieldtype_1').$index.$LANG->line('import_data_stage4_notification_fieldtype_2').$weblog_fields[$index]['field_type'].$LANG->line('import_data_stage4_notification_fieldtype_3').'</li>'."\n";
+					if (!isset($log_notifications[sha1($notification)])) {
+						$notifications .= $notification;
+						$notifications_count++;
+						$log_notifications[sha1($notification)] = 1;
+					} else {
+						$log_notifications[sha1($notification)]++;
+					}
 					$field_post['field_id_'.$weblog_fields[$index]['field_id']] = '';
+				}
 
 				unset($field_type_object);
 
 				if ($weblog_fields[$index]['field_required'] == 'y') {
 					foreach ($field_post as $check_data) {
-						if (empty($check_data))
+						if (empty($check_data) && $check_data !== 0)
 							$invalid_input = TRUE;
 					}
 				}
@@ -226,7 +251,7 @@ require_once('classes/field_type.class.php');
 			}
 			//echo "\n<br />&nbsp;&nbsp;&nbsp;2B - FieldType Memory: ".memory_get_usage(true)."<br />\n";
 
-			if (empty($post_data["title"]))
+			if (empty($post_data["title"]) && $post_data["title"] !== 0)
 				$invalid_input = TRUE;
 
 			if ($invalid_input) {
@@ -265,7 +290,10 @@ require_once('classes/field_type.class.php');
 		$line_count = $input_file_obj->stop_reading_rows();
 		unset($input_file_obj);
 
-		return '<h2>'.$submitted_entries.' ('.$LANG->line('import_data_stage4_of').$line_count.') '.$LANG->line('import_data_stage4_summary_heading').'</h2>'."\n\n".'<ul>'.$output.'</ul>';
+		$final = '<h2>'.$submitted_entries.' ('.$LANG->line('import_data_stage4_of').$line_count.') '.$LANG->line('import_data_stage4_summary_heading').'</h2>'."\n\n".'<ul>'.$output.'</ul>';
+		if (!empty($notifications))
+			$final .= "\n<br />\n".'<h2>'.$notifications_count.' '.$LANG->line('import_data_stage4_notifications').'</h2>'."\n\n".'<ul>'.$notifications.'</ul>';
+		return $final;
 	}
 
 
@@ -286,9 +314,9 @@ require_once('classes/field_type.class.php');
 	$input_data_location = $current_post['input_file'];
 	$input_data_hidden = $DSP->input_hidden('input_file', $input_data_location);
 
-	$unique_columns = $current_post['unique'];
+	$unique_columns = (isset($current_post['unique']) ? $current_post['unique'] : array());
 	$field_column_mapping = $current_post['field_column_select'];
-	$column_field_replationship = (isset($current_post['column_field_relation']) ? $current_post['column_field_relation'] : '');
+	$column_field_replationship = (isset($current_post['column_field_relation']) ? $current_post['column_field_relation'] : array());
 
 	// Set global value for input_loader extension to retain control from EE
 	$GLOBALS['input_loader_end_submit_new_form'] = true;
