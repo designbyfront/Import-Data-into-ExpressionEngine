@@ -40,6 +40,8 @@ require_once 'files/input_types/Csv_file.class.php';
 //require_once 'files/input_types/Xml_test_file.class.php';
 // ~~Add your Input Type here~~
 
+// For those using non-unix return characters
+ini_set('auto_detect_line_endings', true);
 
 class Import_data_CP
 {
