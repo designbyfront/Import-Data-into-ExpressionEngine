@@ -76,14 +76,14 @@ require_once('classes/field_type.class.php');
 
 		// Select normal fields
 		$query = $DB->query('SELECT wf.field_id, wf.field_label, wf.field_name, wf.field_required, wf.field_type, '.($gypsy_installed ? 'wf.field_is_gypsy' : '\'n\' as field_is_gypsy').'
-												 FROM exp_weblogs wb, exp_field_groups fg, exp_weblog_fields wf
-												 WHERE wb.site_id = \''.$DB->escape_str($site_id).'\'
-												 AND   wb.site_id = fg.site_id
-												 AND   wb.site_id = wf.site_id
-												 AND   wb.weblog_id = \''.$DB->escape_str($weblog_id).'\'
-												 AND   wb.field_group = fg.group_id
-												 AND   wb.field_group = wf.group_id '.
-												 ($gypsy_installed ? 'AND   wf.field_is_gypsy = \'n\'' : '')
+									 FROM exp_weblogs wb, exp_field_groups fg, exp_weblog_fields wf
+									 WHERE wb.site_id = \''.$DB->escape_str($site_id).'\'
+									 AND   wb.site_id = fg.site_id
+									 AND   wb.site_id = wf.site_id
+									 AND   wb.weblog_id = \''.$DB->escape_str($weblog_id).'\'
+									 AND   wb.field_group = fg.group_id
+									 AND   wb.field_group = wf.group_id '.
+									 ($gypsy_installed ? 'AND   wf.field_is_gypsy = \'n\'' : '')
 												);
 		$weblog_fields = $query->result;
 		unset($query);
@@ -91,19 +91,19 @@ require_once('classes/field_type.class.php');
 		if ($gypsy_installed) {
 			// Select gypsy fields
 			$query = $DB->query('SELECT wf.gypsy_weblogs, wf.field_id, wf.field_name, wf.field_label, wf.field_required, wf.field_type
-													 FROM exp_weblog_fields wf
-													 WHERE wf.site_id = \''.$DB->escape_str($site_id).'\'
-													 AND   wf.field_is_gypsy = \'y\'
-													');
+										 FROM exp_weblog_fields wf
+										 WHERE wf.site_id = \''.$DB->escape_str($site_id).'\'
+										 AND   wf.field_is_gypsy = \'y\'
+										');
 			foreach($query->result as $row) {
 				$used_by = explode(' ', trim($row['gypsy_weblogs']));
 				if (in_array($weblog_id, $used_by)) {
 					$weblog_fields[] = array('field_id' => $row['field_id'],
-																	'field_label' => $row['field_label'],
-																	'field_name' => $row['field_name'],
-																	'field_required' => $row['field_required'],
-																	'field_type' => $row['field_type'],
-																	'field_is_gypsy' => 'y');
+													 'field_label' => $row['field_label'],
+													 'field_name' => $row['field_name'],
+													 'field_required' => $row['field_required'],
+													 'field_type' => $row['field_type'],
+													 'field_is_gypsy' => 'y');
 				}
 			}
 			unset($query);
@@ -143,10 +143,10 @@ require_once('classes/field_type.class.php');
 				//entry_id, wt.title
 				//wt.*, wd.*
 				$query = 'SELECT *
-									FROM exp_weblog_data wd, exp_weblog_titles wt
-									WHERE wd.entry_id = wt.entry_id
-									AND   wd.site_id = '.$DB->escape_str($site_id).'
-									AND   wd.weblog_id = '.$DB->escape_str($weblog_id);
+								FROM exp_weblog_data wd, exp_weblog_titles wt
+								WHERE wd.entry_id = wt.entry_id
+								AND   wd.site_id = '.$DB->escape_str($site_id).'
+								AND   wd.weblog_id = '.$DB->escape_str($weblog_id);
 
 				foreach($unique_columns as $unique_column) {
 					if ($unique_column === "0")
@@ -173,8 +173,8 @@ require_once('classes/field_type.class.php');
 			$post_data["category"] = array();
 			if (!empty($post_data["entry_id"]) && $post_data["entry_id"] !== 0 && in_array($post_data["entry_id"], $added_entry_ids)) {
 				$query = 'SELECT cat_id
-									FROM exp_category_posts
-									WHERE entry_id = '.$DB->escape_str($post_data["entry_id"]);
+								FROM exp_category_posts
+								WHERE entry_id = '.$DB->escape_str($post_data["entry_id"]);
 				$query = $DB->query($query);
 				$existing_category_ids = $query->result;
 				foreach ($existing_category_ids as $category_id) {
@@ -182,21 +182,34 @@ require_once('classes/field_type.class.php');
 				}
 			}
 			if (!empty($field_column_mapping[1])) {
+				// Look up the category group id(s) associated with this weblog
+				$query = 'SELECT cat_group
+								FROM exp_weblogs
+								WHERE weblog_id = '.$DB->escape_str($weblog_id).'
+								AND site_id = '.$DB->escape_str($site_id);
+				//echo "<br />\n$query<br />\n";
+				$query = $DB->query($query);
+				$cat_group_ids_raw = $query->result;
+				$cat_group_ids = array();
+				if ($query->num_rows > 0)
+					$cat_group_ids = explode('|', $cat_group_ids_raw[0]['cat_group']);
+				// Look up the category id(s) associated with each category group
 				foreach($field_column_mapping[1] as $category) {
 					if (isset($input_row[$category]) && (!empty($input_row[$category]) || $input_row[$category] === 0)) {
-						$query = 'SELECT ct.cat_id
-											FROM exp_weblogs wb, exp_category_groups cg, exp_categories ct
-											WHERE wb.cat_group = cg.group_id
-											AND   wb.weblog_id = '.$weblog_id.'
-											AND   cg.site_id = '.$DB->escape_str($site_id).'
-											AND   ct.group_id = cg.group_id
-											AND   ct.site_id = '.$DB->escape_str($site_id).'
-											AND   ct.cat_name = "'.$DB->escape_str($input_row[$category]).'"';
-						//echo $query."<br />\n";
-						$query = $DB->query($query);
-						$category_id = $query->result;
-						if ($query->num_rows > 0)
-							$post_data["category"] = array_unique(array_merge($post_data["category"], array_values($category_id[0])));
+						foreach ($cat_group_ids as $cat_group_id) {
+							$query = 'SELECT  ct.cat_id
+											FROM exp_category_groups cg, exp_categories ct
+											WHERE cg.group_id = '.$DB->escape_str($cat_group_id).'
+											AND cg.site_id = '.$DB->escape_str($site_id).'
+											AND ct.group_id = cg.group_id
+											AND ct.site_id = '.$DB->escape_str($site_id).'
+											AND ct.cat_name = "'.$DB->escape_str($input_row[$category]).'"';
+							//echo " - &nbsp;&nbsp;$query<br />\n";
+							$query = $DB->query($query);
+							$category_id = $query->result;
+							if ($query->num_rows > 0)
+								$post_data["category"] = array_unique(array_merge($post_data["category"], array_values($category_id[0])));
+						}
 					}
 				}
 			}
@@ -213,14 +226,14 @@ require_once('classes/field_type.class.php');
 
 				// Create post data from field_type class
 				$field_type_object = new Field_Type($index,
-																						$field_id,
-																						$site_id,
-																						$weblog_id,
-																						$weblog_fields[$index],
-																						(isset($input_row[$field_id]) ? $input_row[$field_id] : ''),
-																						$existing_entry,
-																						$added_entry_ids,
-																						$column_field_replationship);
+																$field_id,
+																$site_id,
+																$weblog_id,
+																$weblog_fields[$index],
+																(isset($input_row[$field_id]) ? $input_row[$field_id] : ''),
+																$existing_entry,
+																$added_entry_ids,
+																$column_field_replationship);
 				if (($field_post = $field_type_object->post_value()) === FALSE && $weblog_fields[$index]['field_required'] == 'y') {
 					return $LANG->line('import_data_stage4_missing_fieldtype_1').$weblog_fields[$index]['field_type'].$LANG->line('import_data_stage4_missing_fieldtype_2');
 				} else if ($field_post === FALSE) {
