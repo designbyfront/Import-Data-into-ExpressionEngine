@@ -28,7 +28,7 @@ This work is licensed under the Creative Commons Attribution-Share Alike 3.0 Unp
 To view a copy of this license, visit [http://creativecommons.org/licenses/by-sa/3.0/](http://creativecommons.org/licenses/by-sa/3.0/)
 or send a letter to `Creative Commons, 171 Second Street, Suite 300, San Francisco, California, 94105, USA`
 
-__No Warranty__
+__No Warranty__<br />
 As this program is licensed free of charge, there is no warranty for the program, to the extent permitted by applicable law. Except when otherwise stated in writing the copyright holders and/or other parties provide the program "as is" without warranty of any kind, either expressed or implied, including, but not limited to, the implied warranties of merchantability and fitness for a particular purpose. The entire risk as to the quality and performance of the program is with you. should the program prove defective, you assume the cost of all necessary servicing, repair or correction.
 In no event unless required by applicable law or agreed to in writing will any copyright holder, or any other party who may modify and/or redistribute the program as permitted above, be liable to you for damages, including any general, special, incidental or consequential damages arising out of the use or inability to use the program (including but not limited to loss of data or data being rendered inaccurate or losses sustained by you or third parties or a failure of the program to operate with any other programs), even if such holder or other party has been advised of the possibility of such damages.
 
@@ -39,10 +39,10 @@ In no event unless required by applicable law or agreed to in writing will any c
 ## Adding New Field Types ##
 -- [Back to top](#contents)
 
-You may want to use field types in your weblogs/sections which are not supported by this module.
+You may want to use field types in your weblogs/sections which are not supported by this module.<br />
 To see if a specific field type has already been implemented, please see the [Supported Custom Field Types list](http://github.com/designbyfront/Import-Data-into-ExpressionEngine/blob/master/README.md#supportedfeatures).
 
-If it has not been implemented, you can add it by following the instructions below.
+If it has not been implemented, you can add it by following the instructions below.<br />
 For different field types, the module relies on the `field_type` class, located at:
 [system/modules/import_data/files/classes/field_type.class.php](http://github.com/designbyfront/Import-Data-into-ExpressionEngine/blob/master/EE1/system/modules/import_data/files/classes/field_type.class.php)
 
@@ -73,7 +73,7 @@ The parameters for this class (and so the data which is available to you) are:
 <br />
 
 <br />
-__Step 1.__ - Find out the format of the POST data needed by your required field type
+__Step 1.__ - Find out the structure of the POST data needed by your required field type
 The _date field type_ requires data in the format:
 <pre>
 Array
@@ -81,6 +81,7 @@ Array
     [field_id_XX] => 2010-11-14 21:34 PM
 )
 </pre>
+We can see the structure is the field id mapping to a date string which is of the format "Y-m-d H:i A".
 
 <br />
 __Step 2.__ - Open `field_type.class.php` and create a new private function
@@ -118,7 +119,9 @@ If there is no existing value, we will set our current value to an empty string.
 $this->value = $this->existing['field_id_'.$this->field['field_id']];
 </pre>
 
-* Now that we've got our value (or an the existing value if available), we can construct the POST data. This is an array from the _field id_ to the _field data_. As this is a date, it needs to be in a certain format.<br />
+* Now that we've got our value (or an the existing value if available), we can construct the POST data. This is an array from the _field id_ to the _field data_.<br />
+This is where you would implement the code necessary to format the data correctly for your field type.<br />
+Using the date example, as this is a date it needs to be in a certain format.<br />
 The _field id_ is created in the same way as we accessed the existing entry data array.<br />
 The _field data_ uses `strtotime` to convert from string to timestamp, and then `date` to construct the correctly formatted date.<br />
 This array is then returned.
@@ -126,7 +129,7 @@ This array is then returned.
 array('field_id_'.$this->field['field_id'] => date("Y-m-d H:i A", strtotime($this->value)));
 </pre>
 
-* Our final date field function_ looks like:
+* The final _date field function_ looks like:
 <pre>
 private function post_data_date() {
 	if ($this->value === NULL || $this->value === '') {

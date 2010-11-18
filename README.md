@@ -34,7 +34,7 @@ This work is licensed under the Creative Commons Attribution-Share Alike 3.0 Unp
 To view a copy of this license, visit [http://creativecommons.org/licenses/by-sa/3.0/](http://creativecommons.org/licenses/by-sa/3.0/)
 or send a letter to `Creative Commons, 171 Second Street, Suite 300, San Francisco, California, 94105, USA`
 
-__No Warranty__
+__No Warranty__<br />
 As this program is licensed free of charge, there is no warranty for the program, to the extent permitted by applicable law. Except when otherwise stated in writing the copyright holders and/or other parties provide the program "as is" without warranty of any kind, either expressed or implied, including, but not limited to, the implied warranties of merchantability and fitness for a particular purpose. The entire risk as to the quality and performance of the program is with you. should the program prove defective, you assume the cost of all necessary servicing, repair or correction.
 In no event unless required by applicable law or agreed to in writing will any copyright holder, or any other party who may modify and/or redistribute the program as permitted above, be liable to you for damages, including any general, special, incidental or consequential damages arising out of the use or inability to use the program (including but not limited to loss of data or data being rendered inaccurate or losses sustained by you or third parties or a failure of the program to operate with any other programs), even if such holder or other party has been advised of the possibility of such damages.
 
@@ -126,7 +126,7 @@ Images from [Devot:ee listing](http://devot-ee.com/add-ons/import-data-into-expr
 
 <br />
 ### Stage 3 ###
-In this stage, you now map the fields of your chosen section / weblog to the columns of the input data file.
+In this stage, you now map the fields of your chosen section / weblog to the columns of the input data file.<br />
 Simply use the lists to choose the column which corresponds to each field.
 For the EE  "_Categories_" field, a multiselect is provided so you can choose more than one column, ie. multiple categories.
 
@@ -138,7 +138,7 @@ This is used when updating existing entries or submitting multidata (see example
 ![Import - stage three](http://devot-ee.com/images/sized/images/uploads/addons/stage_three-480x424.jpg "Import - stage three")<br />
 Images from [Devot:ee listing](http://devot-ee.com/add-ons/import-data-into-expressionengine/)
 
-Using "_Unique?_", will cause the module to look for an existing entry to update, based on the unique field value, rather than create a new entry.
+Using "_Unique?_", will cause the module to look for an existing entry to update, based on the unique field value, rather than create a new entry.<br />
 For example, an item could be imported with CSV file format, where `Item Code` is unique:
 <pre>
 Item Name, Item Description, Item Code, Item Price
@@ -156,7 +156,7 @@ and then the price updated later with:
 003, 40
 </pre>
 
-This can also be used to update fields which can hold multiple values, eg. Categories, Playa
+This can also be used to update fields which can hold multiple values, eg. Categories, Playa<br />
 For example, an item could be imported with CSV file format, where `Item Code` is unique:
 <pre>
 Item Name, Item Code, Item Category
@@ -217,8 +217,8 @@ This is the short version of the todo list. This will take a while...
 ## Troubleshooting ##
 -- [Back to top](#contents)
 
-* __Categories are not being imported successfully__
-Are you using the "_SC Category Select_" fieldtype? This fieldtype will cause the standard category submission to return empty, and so they will not be imported. Disable this fieldtype, import the data and then enable after.
+* __Categories are not being imported successfully__<br />
+Are you using the "_SC Category Select_" fieldtype? This fieldtype will cause the standard category submission to return empty, and so they will not be imported. Disable this fieldtype, import the data and then enable after.<br />
 [Thanks to [Paul Bellamy](https://github.com/bellamystudio) for this tip]
 
 * __Are you having trouble?__
