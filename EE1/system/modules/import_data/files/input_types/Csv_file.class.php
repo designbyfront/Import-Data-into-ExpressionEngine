@@ -12,19 +12,16 @@
  *
  */
 
-class Csv_file implements Input_type
-{
+class Csv_file implements Input_type {
 	private $location;
 	private $read_line_handle = FALSE;
 	private $line_count = -1;
 
-	public function Csv_file($location)
-	{
+	public function Csv_file($location) {
 		$this->location = $location;
 	}
 
-	public function get_headings()
-	{
+	public function get_headings() {
 		$fh = fopen($this->location, "r");
 		if ($fh) {
 				$headings = fgetcsv($fh);

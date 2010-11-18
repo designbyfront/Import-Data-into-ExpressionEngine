@@ -16,7 +16,7 @@
 class Field_type {
 
 	private $order;
-	private $field_id;
+	private $column_index;
 	private $site_id;
 	private $weblog_id;
 	private $field;
@@ -41,20 +41,21 @@ class Field_type {
 	);
 
 	/*
-	 * @params order - int specifying column number
-	 * @params field_id - int corresponding to column in the input file
-	 * @params site_id - int specifying site
-	 * @params field - associative array containing details about the field type
-	 * @params value - string value being put into the field
-	 * @params existing - associative array of existing data in database (if available)
-	 * @params added_ids - flat array of ints representing entry_ids of recently entered entries (if available)
-	 * @params relationships - associative array of user defined data relationships [{order} => {weblog}#{field_id}] (if available)
+	 * @params order         - int corresponding to the number of previous fields executed [Incremental] (not including EE specific fields)
+	 * @params column_index  - int corresponding to index for the column of current row in the input file
+	 * @params site_id       - int specifying ExpressionEngine site
+	 * @params weblog_id     - int specifying ExpressionEngine weblog
+	 * @params field         - associative array containing details about the field type
+	 * @params value         - string value being put into the field
+	 * @params existing      -  of existing full entry if found in database (empty if not found)
+	 * @params added_ids     - array of ints which correspond to the entry_id's of recently entered entries (or empty if first entry published)
+	 * @params relationships - associative array  of user defined data relationships [{column_index} => {some_weblog_id}#{some_field_id}] (or empty if not defined in stage 2)
 	 */
-	public function __construct($order, $field_id, $site_id, $weblog_id, $field, $value, $existing, $added_ids, $relationships) {
+	public function __construct($order, $column_index, $site_id, $weblog_id, $field, $value, $existing, $added_ids, $relationships) {
 		//echo 'Input:<pre>'.print_r(array($order, $site_id, $weblog_id, $field, $value, $existing, $added_ids, $relationships), true).'</pre>';
 
 		$this->order         = $order;
-		$this->field_id      = $field_id;
+		$this->column_index  = $column_index;
 		$this->site_id       = $site_id;
 		$this->weblog_id     = $weblog_id;
 		$this->field         = $field;
@@ -65,6 +66,7 @@ class Field_type {
 	}
 
 	public function post_value() {
+		if (isset($this->supported_types[$this->field['field_type']]))
 		if (isset($this->supported_types[$this->field['field_type']]))
 			if (method_exists($this, $this->supported_types[$this->field['field_type']]))
 				return $this->{$this->supported_types[$this->field['field_type']]}();
@@ -113,10 +115,10 @@ class Field_type {
 
 		if ($this->value === NULL || $this->value === '')
 			return array('field_id_'.$this->field['field_id'] => $this->existing['field_id_'.$this->field['field_id']]);
-		if (!isset($this->relationships[$this->field_id]))
+		if (!isset($this->relationships[$this->column_index]))
 			return array();
 
-		$pieces = explode('#', $this->relationships[$this->field_id]);
+		$pieces = explode('#', $this->relationships[$this->column_index]);
 		$query = 'SELECT entry_id
 							FROM exp_weblog_data
 							WHERE site_id = '.$DB->escape_str($this->site_id).'
@@ -164,7 +166,7 @@ class Field_type {
 */
 
 		// If given no relationship, send empty
-		if (!isset($this->relationships[$this->field_id]))
+		if (!isset($this->relationships[$this->column_index]))
 			return array('field_id_'.$this->field['field_id'] => array());
 
 		$previous_entries = array(0 => '');
@@ -191,7 +193,7 @@ class Field_type {
 		if (isset($this->existing['entry_id']) && !in_array($this->existing['entry_id'], $this->added_ids))
 			$previous_entries = array(0 => '');
 
-		$pieces = explode('#', $this->relationships[$this->field_id]);
+		$pieces = explode('#', $this->relationships[$this->column_index]);
 		// If $pieces[1] is 0, we have selected a title
 		if ($pieces[1] == 0) {
 			$query = 'SELECT entry_id, title as field_id_'.$DB->escape_str($this->field['field_id']).'

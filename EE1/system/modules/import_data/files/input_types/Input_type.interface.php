@@ -10,8 +10,7 @@
  * @since   Version 0.1
  *
  */
-interface Input_type
-{
+interface Input_type {
 	// Function: open file, read first row (headings), close file
 	// Return:   flat array of headings
 	public function get_headings();

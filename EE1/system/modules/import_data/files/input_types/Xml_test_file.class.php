@@ -19,19 +19,16 @@
  *
  */
 
-class Xml_test_file implements Input_type
-{
+class Xml_test_file implements Input_type {
 	private $location;
 	private $xml_object = FALSE;
 	private $line_count = -1;
 
-	public function Xml_test_file($location)
-	{
+	public function Xml_test_file($location) {
 		$this->location = $location;
 	}
 
-	public function get_headings()
-	{
+	public function get_headings() {
 		return array('id','name','country');
 	}
 
