@@ -111,18 +111,20 @@ In this stage, you are defining where the data is being put and what it is.
 * "_Relationships with existing entries?_" tickbox should be ticked if the data you are inputting is linked / has a relationship to a weblog or data _already_ in ExpressionEngine.
 For example, ExpressionEngine Relationship field and Playa
 * __Type__ - Select the type of input in the data file [See the "[Supported Features](#supportedfeatures)" section for currently supported types]
-![Import - stage one](http://devot-ee.com/images/sized/images/uploads/addons/stage_one-480x266.jpg "Import - stage one")
+![Import - stage one](http://devot-ee.com/images/sized/images/uploads/addons/stage_one-480x266.jpg "Import - stage one")<br />
 Images from [Devot:ee listing](http://devot-ee.com/add-ons/import-data-into-expressionengine/)
 
+<br />
 ### Stage 2 ###
 In this stage your data file will be uploaded and you will define the existing relationship (if "_Relationships with existing entries?_" ticked) or review stage one data.
 
 * __Input data field__ - Select the column in the input file which has a relationship.
 * __Section__ - Select the section / weblog which the _Input data field_ has a relationship with.
 * __Field__ - Select the field which the _Input data field_ has a relationship with.
-![Import - stage two](http://devot-ee.com/images/sized/images/uploads/addons/stage_two-480x456.jpg "Import - stage two")
+![Import - stage two](http://devot-ee.com/images/sized/images/uploads/addons/stage_two-480x456.jpg "Import - stage two")<br />
 Images from [Devot:ee listing](http://devot-ee.com/add-ons/import-data-into-expressionengine/)
 
+<br />
 ### Stage 3 ###
 In this stage, you now map the fields of your chosen section / weblog to the columns of the input data file.
 Simply use the lists to choose the column which corresponds to each field.
@@ -133,7 +135,7 @@ An asterisk beside a field means that the entry will not be published if there i
 The "_Unique?_" checkbox allows you to specify that the data in this field is unique to that entry, ie. a unique identifier.
 This is used when updating existing entries or submitting multidata (see examples next).
 
-![Import - stage three](http://devot-ee.com/images/sized/images/uploads/addons/stage_three-480x424.jpg "Import - stage three")
+![Import - stage three](http://devot-ee.com/images/sized/images/uploads/addons/stage_three-480x424.jpg "Import - stage three")<br />
 Images from [Devot:ee listing](http://devot-ee.com/add-ons/import-data-into-expressionengine/)
 
 Using "_Unique?_", will cause the module to look for an existing entry to update, based on the unique field value, rather than create a new entry.
@@ -167,6 +169,7 @@ Item 1, 001, Cat3
 </pre>
 which will have one entry in three categories. The `Item Name` data on lines 2 and 3 is redundant and could be removed (as the module will use the existing title).
 
+<br />
 ### Stage 4 ###
 In this stage, you can review errors, warnings and a list of the rows submitted.
 
@@ -183,7 +186,7 @@ Warnings are logged and presented after import:
 
 The list of rows submitted shows the `title` field of each row submitted from the input file and and a success or failure notice.
 
-![Import - stage four](http://devot-ee.com/images/sized/images/uploads/addons/stage_four-480x142.jpg "Import - stage four")
+![Import - stage four](http://devot-ee.com/images/sized/images/uploads/addons/stage_four-480x142.jpg "Import - stage four")<br />
 Images from [Devot:ee listing](http://devot-ee.com/add-ons/import-data-into-expressionengine/)
 
 
