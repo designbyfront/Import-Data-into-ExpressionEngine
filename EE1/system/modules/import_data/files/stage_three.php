@@ -9,7 +9,7 @@
  *
  *
  * To do:
- *  - Allow control over entry_date, status, allow_comments of entry
+ *  - Allow control over status, allow_comments of entry
  *
 */
 
@@ -132,8 +132,9 @@
 				}
 			}
 
-			// Hard code title and category as they are universal and not "real" fields
+			// Hard code EE fields as they are universal and not "real" fields
 			$form_table .= $DSP->table('\' id=\'field_list', '10', '', '100%');
+			// title field
 			$form_table .= $DSP->tr()
 									.  $DSP->table_qcell('', '*', '1%')
 									.  $DSP->table_qcell('itemTitle', 'Title', '20%')
@@ -141,6 +142,7 @@
 									.  $DSP->table_qcell('', $DSP->input_select_header('field_column_select[0]').$field_column_select_populate.$DSP->input_select_footer(), '10%')
 									.  $DSP->table_qcell('', $DSP->input_checkbox('unique[]\' id=\'unique_title', 0).' <label for="unique_title">'.$LANG->line('import_data_unique_field').'</label>') // unique checkbox
 									.  $DSP->tr_c();
+			// category field
 			$form_table .= $DSP->tr()
 									.  $DSP->table_qcell('', '', '1%')
 									.  $DSP->table_qcell('itemTitle', 'Category', '20%')
@@ -148,7 +150,15 @@
 									.  $DSP->table_qcell('', $DSP->input_select_header('field_column_select[1][]', 'y', '4', '85%').$field_column_select_populate.$DSP->input_select_footer(), '10%')
 									.  $DSP->table_qcell('', '---') // no unique category
 									.  $DSP->tr_c();
-			$i = 2;
+			// entry_date field
+			$form_table .= $DSP->tr()
+									.  $DSP->table_qcell('', '', '1%')
+									.  $DSP->table_qcell('itemTitle', 'Entry Date', '20%')
+									.  $DSP->table_qcell('', '[entry_date] date', '15%')
+									.  $DSP->table_qcell('', $DSP->input_select_header('field_column_select[2]').$field_column_select_populate.$DSP->input_select_footer(), '10%')
+									.  $DSP->table_qcell('', '---') // no unique category
+									.  $DSP->tr_c();
+			$i = 3;
 			foreach($weblog_fields as $index => $row) {
 				$field_title = $row['field_label'];
 				// Translate ftype_id_X into field type name

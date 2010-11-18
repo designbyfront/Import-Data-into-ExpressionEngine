@@ -21,15 +21,22 @@ require_once('classes/field_type.class.php');
 
 	global $DSP, $LANG, $DB, $FNS;
 
+	// insert_data - Takes in all data provides by previous steps. Constructs POST data and POSTs to EE publish entry
+	// @param site_id                     int     ID of the site where the entry is to be posted to                    (selected in stage 1)
+	// @param weblog_id                   int     ID of the weblog where the entry is to be posted to                  (selected in stage 1)
+	// @param input_data_type             string  Type of data file to be processed                                    (selected in stage 1)
+	// @param input_data_location         string  Location of data file to be processed                                (uploaded in stage 2)
+	// @param unique_columns              array   Columns which have bee selected as unique                            (selected in stage 3)
+	// @param field_column_mapping        array   Mapping of weblog fields to data file columns                        (selected in stage 3)
+	// @param column_field_replationship  array   Mapping of relationships between data file column and weblog field   (selected in stage 2)
 	function insert_data($site_id, $weblog_id, $input_data_type, $input_data_location, $unique_columns, $field_column_mapping, $column_field_replationship) {
-
-		// Number of hard coded EE fields (title, category)
-		$num_ee_special_fields = 2;
 
 		//echo "\n<br />1 - Function Memory: ".memory_get_usage(true)."<br /><br />\n\n";
 		global $LANG, $DSP, $DB;
-		$added_entry_ids = array();
+		$added_entry_ids = array(); // Array of entries which have already been added
+		$num_ee_special_fields = 3; // Number of hard coded EE fields (title, category, entry_date)
 
+		// Select the correct input_type object depending on type selected
 		switch($input_data_type)
 		{
 			case 'CSV' :
@@ -47,33 +54,36 @@ require_once('classes/field_type.class.php');
 				return $LANG->line('import_data_unknown_input_type').' ['.$input_data_type.']';
 		}
 
+		// Check that input_type object is an instance of Input_type (and thus implements all necessary functions)
 		if (!($input_file_obj instanceof Input_type))
 			return $LANG->line('import_data_object_implementation');
 
-		$unique_columns_count = count($unique_columns);
-
+		// Start reading from the data file (error if not readable)
 		if ($input_file_obj->start_reading_rows() === FALSE)
 			return $LANG->line('import_data_error_input_type').' ['.$input_data_location.']';
+		$input_file_obj->read_row(); // Discard the headers
 
-		// Discard the headers
-		$input_file_obj->read_row();
-
-		// Lookup FF field names (check it is intalled first)
-		$query = $DB->query('SHOW tables LIKE \'exp_ff_fieldtypes\'');
+		// --- FF Fieldtypes -----------------------------
+		// Lookup FF field names
+		$query = $DB->query('SHOW tables LIKE \'exp_ff_fieldtypes\''); // Check if installed
 		$ff_fieldtypes = array();
 		if (!empty($query->result)) {
 			$query = $DB->query('SELECT fieldtype_id, class FROM exp_ff_fieldtypes');
 			foreach ($query->result as $index => $row)
 				$ff_fieldtypes['ftype_id_'.$row['fieldtype_id']] = $row['class'];
 		}
+		// ------------------------------------------------
 
-		// check if Gypsy is installed and set boolean
+		// --- Gypsy --------------------------------------
+		// Check if Gypsy is installed
 		$query = $DB->query('SELECT class
 												 FROM exp_extensions 
 												 WHERE class = \'Gypsy\'
 												');
 		$gypsy_installed = $query->num_rows > 0;
+		// ------------------------------------------------
 
+		// Populate array with all fields in the weblog
 		// Select normal fields
 		$query = $DB->query('SELECT wf.field_id, wf.field_label, wf.field_name, wf.field_required, wf.field_type, '.($gypsy_installed ? 'wf.field_is_gypsy' : '\'n\' as field_is_gypsy').'
 									 FROM exp_weblogs wb, exp_field_groups fg, exp_weblog_fields wf
@@ -84,7 +94,7 @@ require_once('classes/field_type.class.php');
 									 AND   wb.field_group = fg.group_id
 									 AND   wb.field_group = wf.group_id '.
 									 ($gypsy_installed ? 'AND   wf.field_is_gypsy = \'n\'' : '')
-												);
+								);
 		$weblog_fields = $query->result;
 		unset($query);
 
@@ -114,6 +124,8 @@ require_once('classes/field_type.class.php');
 //var_dump($field_column_mapping);
 //echo'</pre>';
 //echo "\n<br />2 - Start File Memory: ".memory_get_usage(true)."<br /><br />\n\n";
+
+		// Initial variable before looking through data file
 		$output = '';
 		$submitted_entries = 0;
 		$entry_number = 0;
@@ -122,13 +134,16 @@ require_once('classes/field_type.class.php');
 		$log_notifications = array();
 		$notifications_count = 0;
 
+		$unique_columns_count = count($unique_columns);
+
+		// Loop through all rows in the data file
 		while (($input_row = $input_file_obj->read_row()) !== FALSE) {
 			// Construct row POST call
 			$post_data = array();
 			$post_data["site_id"] = $site_id;
 			$post_data["weblog_id"] = $weblog_id;
 			$post_data["entry_id"] = '';
-			$post_data["entry_date"] = date("Y-m-d H:i A");
+			$post_data["entry_date"] = (empty($input_row[$field_column_mapping[2]]) ? date("Y-m-d H:i A") : date("Y-m-d H:i A", (is_numeric($input_row[$field_column_mapping[2]]) ? $input_row[$field_column_mapping[2]] : strtotime($input_row[$field_column_mapping[2]].' '.date('T')))));
 			//$post_data["status"] = 'open';
 			$post_data["allow_comments"] = 'y';
 			$post_data["structure_parent"] = '';
