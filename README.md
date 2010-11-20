@@ -55,6 +55,8 @@ Additional input types can be easily added. Please see [the advanced usage guide
 * Title
 * Category
 * Entry Date
+* Author
+* Status
 
 ### Supported Custom Field Types ###
 * Text input [text]
@@ -81,7 +83,7 @@ Additional field types can be easily added. Please see [the advanced usage guide
 ## Installation ##
 -- [Back to top](#contents)
 
-* The directory structure inside the _EE1_ directory mimics that of a standard EE1 installation. Use this to place the files in the correct place.<br />
+* The directory structure inside the `EE1` directory mimics that of a standard ExpressionEngine 1 installation. Use this to place the files in the correct place.<br />
 It will contain:
     * 1 Extension
         * 1 extension file
@@ -104,7 +106,7 @@ __Both__ the extension and module must be installed for the import to work succe
 The module will guide you through three setup stages and the submission stage. To access the module, click the "Import Data" link on your modules page.
 
 ### Stage 1 ###
-In this stage, you are defining where the data is being put and what it is.
+In this stage, you are defining where the data is being published and what type it is.
 
 * __Site__ and __Section__ - Select the site and section/weblog that you wish to import into
 * __Input File__ - Browse for the input file you wish to upload as the data source
@@ -196,7 +198,7 @@ This is the short version of the todo list. This will take a while...
 * More end user warnings / notifications
 * Upload file field support
 * Better code structure
-    * Make it easier to add new input types
+    * <del>Make it easier to add new input types</del>
 * Select previously uploaded file
 * Extend to EE2
 
