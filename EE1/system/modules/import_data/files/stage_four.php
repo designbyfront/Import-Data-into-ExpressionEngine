@@ -44,24 +44,12 @@ require_once('classes/field_type.class.php');
 		$status_index     = 4;
 
 		// Select the correct input_type object depending on type selected
-		switch($input_data_type)
-		{
-			case 'CSV' :
-				$input_file_obj = new Csv_file($input_data_location);
-				break;
-
-			//case 'XML Test' :
-			//	$input_file_obj = new Xml_test_file($input_data_location);
-			//	break;
-
-			case 'XML' :
-				return $input_data_type.$LANG->line('import_data_unimplemented_input_type');
-
-			default :
-				return $LANG->line('import_data_unknown_input_type').' ['.$input_data_type.']';
-		}
+		$input_file_obj_return = Import_data_CP::get_input_type_obj($input_data_type, $input_data_location);
+		if (!$input_file_obj_return[0])
+			return $input_file_obj_return[1];
 
 		// Check that input_type object is an instance of Input_type (and thus implements all necessary functions)
+		$input_file_obj = $input_file_obj_return[1];
 		if (!($input_file_obj instanceof Input_type))
 			return $LANG->line('import_data_object_implementation');
 
@@ -453,7 +441,7 @@ require_once('classes/field_type.class.php');
 	$input_data_hidden = $DSP->input_hidden('input_file', $input_data_location);
 
 	$unique_columns = (isset($current_post['unique']) ? $current_post['unique'] : array());
-	$field_column_mapping = $current_post['field_column_select'];
+	$field_column_mapping = (isset($current_post['field_column_select']) ? $current_post['field_column_select'] : array());
 	$column_field_replationship = (isset($current_post['column_field_relation']) ? $current_post['column_field_relation'] : array());
 
 	// Set global value for input_loader extension to retain control from EE

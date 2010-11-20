@@ -46,12 +46,22 @@ ini_set('auto_detect_line_endings', true);
 class Import_data_CP
 {
 
-	var $version = '1.3';
+	var $version = '1.4';
+
+	// Available input types
+	var $input_types = array(
+	                      'CSV' => 'CSV',
+	                      //'XML' => 'XML',
+	                      '' => ''
+	                    );
+
+	var $input_file_obj;
+
 
 	function Import_data_CP( $switch = TRUE )
 	{
 		global $IN;
-		
+
 		if ($switch)
 		{
 			switch($IN->GBL('P'))
@@ -65,6 +75,26 @@ class Import_data_CP
 				default            : $this->stage_one();
 					break;
 			}
+		}
+	}
+
+	function get_input_type_obj($input_data_type, $input_data_location)
+	{
+		global $LANG;
+		// Implemented input types
+		switch($input_data_type)
+		{
+			case 'CSV' :
+				return array(TRUE, new Csv_file($input_data_location));
+
+			//case 'XML Test' :
+			//	return new array(TRUE, Xml_test_file($input_data_location));
+
+			case 'XML' :
+				return  array(FALSE, $input_data_type.$LANG->line('import_data_unimplemented_input_type'));
+
+			default :
+				return  array(FALSE, $LANG->line('import_data_unknown_input_type').' ['.$input_data_type.']');
 		}
 	}
 

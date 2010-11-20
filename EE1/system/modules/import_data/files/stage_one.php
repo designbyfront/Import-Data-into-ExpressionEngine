@@ -12,12 +12,6 @@
 
 	global $DSP, $LANG, $DB, $FNS, $SESS;
 
-	$input_types = array(
-                        'CSV' => 'CSV',
-                        //'XML Test' => 'XML Test',
-                        '' => ''
-                        );
-
 	// -------------------------------------------------------
 	//  HTML Title and Navigation Crumblinks
 	// -------------------------------------------------------
@@ -137,7 +131,7 @@ $r = '<script type="text/javascript">
 	$weblog_select .= $DSP->input_select_footer();
 
 	$type_select = $DSP->input_select_header('type_select');
-	foreach($input_types as $id => $input)
+	foreach($this->input_types as $id => $input)
 		if ($input !== '')
 			$type_select .= $DSP->input_select_option($id, $input);
 	$type_select .= $DSP->input_select_footer();

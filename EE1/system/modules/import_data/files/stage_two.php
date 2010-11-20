@@ -14,23 +14,12 @@
 	function generate_input_headings($input_data_type, $input_data_location) {
 		global $LANG, $DSP;
 
-		switch($input_data_type)
-		{
-			case 'CSV' :
-				$input_file_obj = new Csv_file($input_data_location);
-				break;
+		$input_file_obj_return = Import_data_CP::get_input_type_obj($input_data_type, $input_data_location);
 
-			//case 'XML Test' :
-			//	$input_file_obj = new Xml_test_file($input_data_location);
-			//	break;
+		if (!$input_file_obj_return[0])
+			return $input_file_obj_return[1];
 
-			case 'XML' :
-				return $input_data_type.$LANG->line('import_data_unimplemented_input_type');
-
-			default :
-				return $LANG->line('import_data_unknown_input_type').' ['.$input_data_type.']';
-		}
-
+		$input_file_obj = $input_file_obj_return[1];
 		if (!($input_file_obj instanceof Input_type))
 			return $LANG->line('import_data_object_implementation');
 
