@@ -160,6 +160,7 @@ private $supported_types = array(
 
 <br />
 __Summary__
+
 * Check if `$this->value` if invalid and use the data in `$this->existing` to default
 * Return an array with the field name 'field_id_X' mapped to the data
 
@@ -289,10 +290,10 @@ switch($input_data_type)
 ## Creating Interesting Input Types ##
 -- [Back to top](#contents)
 
-Please read the [Adding New Data Input Types](#addinginputtype) section before reading this - this is further ideas for new input types
+Please read the [Adding New Data Input Types](#addinginputtype) section above before reading this - this contains further ideas for new input types
 
 * __Multiple Types from One Class__<br />
-The current CSV input type class uses the PHP `fgetcsv` function to process CSV files. This function allows the line length, delimiter character, enclosure character and escape character to be defined. This can be controlled through the constructor of the CSV input type class.<br />
+The current CSV input type class uses the PHP `fgetcsv` function to process CSV files. This function allows the line length, delimiter character and enclosure character to be defined. This can be controlled through the constructor of the CSV input type class.<br />
 To create a Tab Separated Value input type class would just require these additions:
 <pre>
 $input_types = array(

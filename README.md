@@ -233,15 +233,15 @@ _Row Errors_ -
 __Warnings__ are significant events which occur during import. The import will continue unhindered, but side-effects may occur.
 
 * Unimplemented fieldtype which is not required
-    * In this instance, the field is not required so import can continue. However, data given to import into this field will be ignores as the field type is unknown.
+    * In this instance, the field is not required so import can continue. However, data given to import into this field will be ignored as the field type is unknown.
 
----
+<hr />
 
 * __Categories are not being imported successfully__<br />
 Are you using the "_SC Category Select_" fieldtype? This fieldtype will cause the standard category submission to return empty, and so they will not be imported. Disable this fieldtype, import the data and then enable after.<br />
 [Thanks to [Paul Bellamy](https://github.com/bellamystudio) for this tip]
 
----
+<hr />
 
 * __Are you having trouble?__
 Please use the [issues page](http://github.com/designbyfront/Import-Data into-ExpressionEngine/issues) or contact us at [info@designbyfront.com](info@designbyfront.com).
