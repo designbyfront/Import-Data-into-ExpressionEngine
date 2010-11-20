@@ -6,6 +6,7 @@ This guide will detail the ways in which the Import Data Module can be extended.
 * [Introduction](#introduction)
 * [Adding New Field Types](#addingfieldtype)
 * [Adding New Data Input Types](#addinginputtype)
+    * [Creating Interesting Input Types](#interestinginputtype)
 
 <a name="introduction"></a>
 ## Introduction ##
@@ -226,6 +227,15 @@ public function read_row() {
 }
 </pre>
 
+* __Constructor__
+    * Most classes will need the location of the input file to run. This can be provided through the constructor.
+    * Below is the constructor in `Csv_file.class.php`
+<pre>
+public function Csv_file($location) {
+	$this->location  = $location;
+}
+</pre>
+
 
 <br />
 __Step 1.__ - Construct your input type class
@@ -239,14 +249,12 @@ Current types are:
 __Step 2.__ - Add your new input type PHP class into the input_types directory `system/modules/import_data/files/input_types/`
 
 <br />
-__Step 3.__ - Include your new input type PHP class at the top of `system/modules/import_data/mcp.import_data.php`
+__Step 3.__ - Add your new input type in `system/modules/import_data/mcp.import_data.php`
+* Include your input type new PHP class at the top
 <pre>
 require_once 'files/input_types/My_new_input_type.class.php';
 </pre>
-
-<br />
-__Step 4.__ - Add your new data type in each stage file in directory `system/modules/import_data/files/`
-* Add the new data type name to the `$input_types` array at the top of `stage_one.php`
+* Add the new data type name to the `$input_types` array
 <pre>
 $input_types = array(
 	'CSV' => 'CSV',
@@ -254,25 +262,65 @@ $input_types = array(
 	'' => ''
 );
 </pre>
-
-* Add the new data type name and object instantiation to `stage_two.php`, `stage_three.php` and `stage_four.php`<br />
-    * Object instantiation occurs in the switch statement, depending on what type has been provided<br />
-    * Make sure to assign the object to `$input_file_obj`
+* Add the new data type name and object instantiation in the `get_input_type_obj` function
+    * Object instantiation occurs in the switch statement, depending on what type has been provided
+    * You must return an array - boolean true (for success), followed by an instatiation of your object
 <pre>
 switch($input_data_type)
 {
 	case 'CSV' :
-		$input_file_obj = new Csv_file($input_data_location);
-		break;
+		return array(TRUE, new Csv_file($input_data_location));
 
 	case 'my_new_input_type' :
-		$input_file_obj = new My_new_input_type($input_data_location);
-		break;
+		return array(TRUE, new My_new_input_type($input_data_location));
 
 	case 'XML' :
-		return $input_data_type.$LANG->line('import_data_unimplemented_input_type');
+		return array(FALSE, $input_data_type.$LANG->line('import_data_unimplemented_input_type'));
 
 	default :
-		return $LANG->line('import_data_unknown_input_type').' ['.$input_data_type.']';
+		return array(FALSE, $LANG->line('import_data_unknown_input_type').' ['.$input_data_type.']');
 }
 </pre>
+
+
+
+
+<a name="interestinginputtype"></a>
+## Creating Interesting Input Types ##
+-- [Back to top](#contents)
+
+Please read the [Adding New Data Input Types](#addinginputtype) section before reading this - this is further ideas for new input types
+
+* __Multiple Types from One Class__<br />
+The current CSV input type class uses the PHP `fgetcsv` function to process CSV files. This function allows the line length, delimiter character, enclosure character and escape character to be defined. This can be controlled through the constructor of the CSV input type class.<br />
+To create a Tab Separated Value input type class would just require these additions:
+<pre>
+$input_types = array(
+	'CSV' => 'CSV',
+	'TSV' => 'TSV',
+	'' => ''
+);
+</pre>
+<pre>
+switch($input_data_type)
+{
+	case 'CSV' :
+		return array(TRUE, new Csv_file($input_data_location));
+
+	case 'TSV' :
+		return array(TRUE, new Csv_file($input_data_location, 0, "\t"));
+
+	case 'XML' :
+		return array(FALSE, $input_data_type.$LANG->line('import_data_unimplemented_input_type'));
+
+	default :
+		return array(FALSE, $LANG->line('import_data_unknown_input_type').' ['.$input_data_type.']');
+}
+</pre>
+
+
+* __Remote File Input__<br />
+A remote input file is fully feasible. The input data for a remote file loading input type class could simply contain the URL of the remote file.<br />
+It would then be up to the input type class to make calls to the remote file or cache the file locally and output the data as required.
+
+

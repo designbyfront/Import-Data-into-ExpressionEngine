@@ -111,6 +111,7 @@ In this stage, you are defining where the data is being put and what it is.
 * "_Relationships with existing entries?_" tickbox should be ticked if the data you are inputting is linked / has a relationship to a weblog or data _already_ in ExpressionEngine.
 For example, ExpressionEngine Relationship field and Playa
 * __Type__ - Select the type of input in the data file [See the "[Supported Features](#supportedfeatures)" section for currently supported types]
+
 ![Import - stage one](http://devot-ee.com/images/sized/images/uploads/addons/stage_one-480x266.jpg "Import - stage one")<br />
 Images from [Devot:ee listing](http://devot-ee.com/add-ons/import-data-into-expressionengine/)
 
@@ -121,6 +122,7 @@ In this stage your data file will be uploaded and you will define the existing r
 * __Input data field__ - Select the column in the input file which has a relationship.
 * __Section__ - Select the section / weblog which the _Input data field_ has a relationship with.
 * __Field__ - Select the field which the _Input data field_ has a relationship with.
+
 ![Import - stage two](http://devot-ee.com/images/sized/images/uploads/addons/stage_two-480x456.jpg "Import - stage two")<br />
 Images from [Devot:ee listing](http://devot-ee.com/add-ons/import-data-into-expressionengine/)
 
@@ -171,19 +173,7 @@ which will have one entry in three categories. The `Item Name` data on lines 2 a
 
 <br />
 ### Stage 4 ###
-In this stage, you can review errors, warnings and a list of the rows submitted.
-
-Errors are fatal and will stop import:
-
- * Unknown input type provided
- * Invalid input_type object implemented
- * Unable to read input file
- * Unimplemented fieldtype which is required
-
-Warnings are logged and presented after import:
-
- * Unimplemented fieldtype which is not required
-
+In this stage, you can review errors, warnings and a list of the rows submitted. For more details on errors and warnings, please consult the [Errors and Warnings list in Toubleshooting](#troubleshooting).<br />
 The list of rows submitted shows the `title` field of each row submitted from the input file and and a success or failure notice.
 
 ![Import - stage four](http://devot-ee.com/images/sized/images/uploads/addons/stage_four-480x142.jpg "Import - stage four")<br />
@@ -217,9 +207,39 @@ This is the short version of the todo list. This will take a while...
 ## Troubleshooting ##
 -- [Back to top](#contents)
 
+* __Errors and Warnings List__<br />
+
+__Errors__ can occur for the import as a whole (which will stop the import), or on a per row basis (which stop the row import, but continue the overall import).
+
+_Import Errors_ -
+
+* Unknown input type provided
+* Invalid input_type object implemented
+* Unable to read input file
+* Unimplemented fieldtype which is required
+
+_Row Errors_ -
+
+* Row does not contain the correct number of columns to correspond to the fields selected
+* Empty data given for 'title' field
+* Empty data given for 'author' field
+* Selected 'author' does not exist
+* Selected 'author' does not have permission to publish or edit this weblog/section
+* Selected 'status' is not in status group assigned to weblog/section
+* Empty data given for required field
+
+__Warnings__ are significant events which occur during import. The import will continue unhindered, but side-effects may occur.
+
+* Unimplemented fieldtype which is not required
+    * In this instance, the field is not required so import can continue. However, data given to import into this field will be ignores as the field type is unknown.
+
+---
+
 * __Categories are not being imported successfully__<br />
 Are you using the "_SC Category Select_" fieldtype? This fieldtype will cause the standard category submission to return empty, and so they will not be imported. Disable this fieldtype, import the data and then enable after.<br />
 [Thanks to [Paul Bellamy](https://github.com/bellamystudio) for this tip]
+
+---
 
 * __Are you having trouble?__
 Please use the [issues page](http://github.com/designbyfront/Import-Data into-ExpressionEngine/issues) or contact us at [info@designbyfront.com](info@designbyfront.com).
