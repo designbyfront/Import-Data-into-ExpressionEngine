@@ -14,17 +14,24 @@
 
 class Csv_file implements Input_type {
 	private $location;
+	private $length;
+	private $delimiter;
+	private $enclosure;
+
 	private $read_line_handle = FALSE;
 	private $line_count = -1;
 
-	public function Csv_file($location) {
-		$this->location = $location;
+	public function Csv_file($location, $length=0, $delimiter=',', $enclosure='"') {
+		$this->location  = $location;
+		$this->length    = $length;
+		$this->delimiter = $delimiter;
+		$this->enclosure = $enclosure;
 	}
 
 	public function get_headings() {
 		$fh = fopen($this->location, "r");
 		if ($fh) {
-				$headings = fgetcsv($fh);
+				$headings = fgetcsv($fh, $this->length, $this->delimiter, $this->enclosure);
 				fclose($fh);
 				return $headings;
 		}
@@ -45,7 +52,7 @@ class Csv_file implements Input_type {
 	public function read_row() {
 		if (feof($this->read_line_handle))
 			return FALSE;
-		$line = fgetcsv($this->read_line_handle);
+		$line = fgetcsv($this->read_line_handle, $this->length, $this->delimiter, $this->enclosure);
 		if ($line !== FALSE)
 			$this->line_count++;
 		return $line;
