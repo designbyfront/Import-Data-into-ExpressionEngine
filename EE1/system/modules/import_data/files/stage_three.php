@@ -67,11 +67,11 @@
 			$unassigned_input_fields = array();
 			$relations_table  = $DSP->table('', '10', '', '100%');
 			$relations_table .= $DSP->tr()
-											 .  $DSP->table_qcell('itemTitle\' colspan=\'2', '<u>'.$LANG->line('import_data_stage3_show_relationships_title').'</u>:', '10%');
+								  .  $DSP->table_qcell('itemTitle\' colspan=\'2', '<u>'.$LANG->line('import_data_stage3_show_relationships_title').'</u>:', '10%');
 			foreach($headings as $index => $heading) {
 				if (isset($input_heading_to_weblog[$index]) && isset($input_heading_to_field[$index])) {
 					$relations_table .= $DSP->tr()
-													 .  $DSP->table_qcell('itemTitle', ($index+1).'. '.$heading, '10%');
+										  .  $DSP->table_qcell('itemTitle', ($index+1).'. '.$heading, '10%');
 					$weblog_pieces = explode('#', $input_heading_to_weblog[$index]);
 					$field_pieces = explode('#', $input_heading_to_field[$index]);
 					$relation_hidden = $DSP->input_hidden('column_field_relation['.$index.']', $weblog_pieces[0].'#'.$field_pieces[0]);
@@ -146,7 +146,7 @@
 			$form_table .= $DSP->tr()
 									.  $DSP->table_qcell('', '', '1%')
 									.  $DSP->table_qcell('itemTitle', 'Category', '20%')
-									.  $DSP->table_qcell('', '[category] category', '15%')
+									.  $DSP->table_qcell('', '[category] text', '15%')
 									.  $DSP->table_qcell('', $DSP->input_select_header('field_column_select[1][]', 'y', '4', '85%').$field_column_select_populate.$DSP->input_select_footer(), '10%')
 									.  $DSP->table_qcell('', '---') // no unique category
 									.  $DSP->tr_c();
@@ -158,7 +158,28 @@
 									.  $DSP->table_qcell('', $DSP->input_select_header('field_column_select[2]').$field_column_select_populate.$DSP->input_select_footer(), '10%')
 									.  $DSP->table_qcell('', '---') // no unique category
 									.  $DSP->tr_c();
-			$i = 3;
+			// author field
+			$form_table .= $DSP->tr()
+									.  $DSP->table_qcell('', '', '1%')
+									.  $DSP->table_qcell('itemTitle', 'Author', '20%')
+									.  $DSP->table_qcell('', '[author] text', '15%')
+									.  $DSP->table_qcell('', $DSP->input_select_header('field_column_select[3]').$field_column_select_populate.$DSP->input_select_footer(), '10%')
+									.  $DSP->table_qcell('', '---') // no unique category
+									.  $DSP->tr_c();
+			// status field
+			$form_table .= $DSP->tr()
+									.  $DSP->table_qcell('', '', '1%')
+									.  $DSP->table_qcell('itemTitle', 'Status', '20%')
+									.  $DSP->table_qcell('', '[status] text', '15%')
+									.  $DSP->table_qcell('', $DSP->input_select_header('field_column_select[4]').$field_column_select_populate.$DSP->input_select_footer(), '10%')
+									.  $DSP->table_qcell('', '---') // no unique category
+									.  $DSP->tr_c();
+
+			$form_table .= $DSP->tr()
+							.  $DSP->table_qcell('itemTitle\' colspan=\'5', '<hr />')
+							.  $DSP->tr_c();
+
+			$i = 5;
 			foreach($weblog_fields as $index => $row) {
 				$field_title = $row['field_label'];
 				// Translate ftype_id_X into field type name
@@ -167,7 +188,7 @@
 
 				$field_text = '['.$row['field_name'].'] '.$row['field_type'];
 				$field_text .= ($row['field_is_gypsy'] == 'y' ? ' (gypsy)' : '');
-				$field_required = ($row['field_required'] == 'y' ? '*' : '');
+				$field_required = ($row['field_required'] == 'y' ? '&nbsp;&nbsp;*' : '');
 				$unique_checkbox = $DSP->input_checkbox('unique[]\' id=\'unique_'.$index, $index+1);
 				$form_table .= $DSP->tr()
 										.  $DSP->table_qcell('', $field_required, '1%')

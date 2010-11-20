@@ -34,7 +34,14 @@ require_once('classes/field_type.class.php');
 		//echo "\n<br />1 - Function Memory: ".memory_get_usage(true)."<br /><br />\n\n";
 		global $LANG, $DSP, $DB;
 		$added_entry_ids = array(); // Array of entries which have already been added
-		$num_ee_special_fields = 3; // Number of hard coded EE fields (title, category, entry_date)
+
+		// Hard coded EE fields (title, category, entry_date, author, status)
+		$num_ee_special_fields = 5;
+		$title_index      = 0;
+		$category_index   = 1;
+		$entry_date_index = 2;
+		$author_id_index  = 3;
+		$status_index     = 4;
 
 		// Select the correct input_type object depending on type selected
 		switch($input_data_type)
@@ -61,7 +68,9 @@ require_once('classes/field_type.class.php');
 		// Start reading from the data file (error if not readable)
 		if ($input_file_obj->start_reading_rows() === FALSE)
 			return $LANG->line('import_data_error_input_type').' ['.$input_data_location.']';
-		$input_file_obj->read_row(); // Discard the headers
+		$headers = $input_file_obj->read_row(); // Discard the headers
+		$input_column_num = count($headers);
+		unset($headers);
 
 		// --- FF Fieldtypes -----------------------------
 		// Lookup FF field names
@@ -77,9 +86,9 @@ require_once('classes/field_type.class.php');
 		// --- Gypsy --------------------------------------
 		// Check if Gypsy is installed
 		$query = $DB->query('SELECT class
-												 FROM exp_extensions 
-												 WHERE class = \'Gypsy\'
-												');
+									 FROM exp_extensions 
+									 WHERE class = \'Gypsy\'
+									');
 		$gypsy_installed = $query->num_rows > 0;
 		// ------------------------------------------------
 
@@ -94,7 +103,7 @@ require_once('classes/field_type.class.php');
 									 AND   wb.field_group = fg.group_id
 									 AND   wb.field_group = wf.group_id '.
 									 ($gypsy_installed ? 'AND   wf.field_is_gypsy = \'n\'' : '')
-								);
+									);
 		$weblog_fields = $query->result;
 		unset($query);
 
@@ -138,21 +147,35 @@ require_once('classes/field_type.class.php');
 
 		// Loop through all rows in the data file
 		while (($input_row = $input_file_obj->read_row()) !== FALSE) {
+
+			// Detect malformed CSV rows and ignore
+			if (count($input_row) != $input_column_num) {
+				$entry_number++;
+				$output .= '<li>'.$LANG->line('import_data_stage4_row_error').$entry_number.' '.$LANG->line('import_data_stage4_invalid_row_structure_1').$input_column_num.$LANG->line('import_data_stage4_invalid_row_structure_2').count($input_row).$LANG->line('import_data_stage4_invalid_row_structure_3').'</li>'."\n";
+				continue;
+			}
+
 			// Construct row POST call
 			$post_data = array();
 			$post_data["site_id"] = $site_id;
 			$post_data["weblog_id"] = $weblog_id;
-			$post_data["entry_id"] = '';
-			$post_data["entry_date"] = (empty($input_row[$field_column_mapping[2]]) ? date("Y-m-d H:i A") : date("Y-m-d H:i A", (is_numeric($input_row[$field_column_mapping[2]]) ? $input_row[$field_column_mapping[2]] : strtotime($input_row[$field_column_mapping[2]].' '.date('T')))));
-			//$post_data["status"] = 'open';
+			$post_data["title"] = $input_row[$field_column_mapping[$title_index]];
+			$post_data["category"] = array(); // Calculated later
+			$post_data["entry_date"] = (empty($input_row[$field_column_mapping[$entry_date_index]]) ? date("Y-m-d H:i A") : date("Y-m-d H:i A", (is_numeric($input_row[$field_column_mapping[$entry_date_index]]) ? $input_row[$field_column_mapping[$entry_date_index]] : strtotime($input_row[$field_column_mapping[$entry_date_index]].' '.date('T')))));
+			$post_data["author_id"] = ''; // Calcaulted later
+			$post_data["status"] = 'open'; // Calculated later
+
+			//$post_data["entry_id"] = '';
+			$post_data["url_title"] = '';
 			$post_data["allow_comments"] = 'y';
 			$post_data["structure_parent"] = '';
 			//$post_data["structure_uri"] = '';
 			$post_data["structure_template_id"] = '';
-			$post_data["title"] = $input_row[$field_column_mapping[0]];
-			$post_data["url_title"] = '';
 
-			// Check if already exists (from unique) - details from this can be used as defaults and to update
+			// -----------------------------------------
+
+			// Check if an entry already exists (using unique tickbox)
+			// - These details from this can be used as defaults when updating
 			$existing_entry = FALSE;
 			if ($unique_columns_count > 0) {
 				//entry_id, wt.title
@@ -165,7 +188,7 @@ require_once('classes/field_type.class.php');
 
 				foreach($unique_columns as $unique_column) {
 					if ($unique_column === "0")
-						$query .=  '		AND   wt.title = \''.$DB->escape_str($input_row[$field_column_mapping[0]]).'\'';
+						$query .=  '		AND   wt.title = \''.$DB->escape_str($input_row[$field_column_mapping[$title_index]]).'\'';
 					else
 						$query .=  '		AND   wd.field_id_'.$DB->escape_str($weblog_fields[$unique_column-1]['field_id']).' = \''.$DB->escape_str($input_row[$field_column_mapping[$unique_column+($num_ee_special_fields-1)]]).'\'';
 				}
@@ -179,13 +202,26 @@ require_once('classes/field_type.class.php');
 				if ($existing_entry !== NULL && isset($existing_entry[0])) {
 					$existing_entry = $existing_entry[0];
 					$post_data["entry_id"] = $existing_entry["entry_id"];
-					if ($input_row[$field_column_mapping[0]] === NULL)
-						$post_data["title"] = $existing_entry["title"];
 				}
 			}
 			//echo "\n<br />&nbsp;&nbsp;&nbsp;2A - Unique Check Memory: ".memory_get_usage(true)."<br />\n";
 
-			$post_data["category"] = array();
+			// -----------------------------------------
+
+			// Default title if empty
+			if (empty($input_row[$field_column_mapping[$title_index]]) && $input_row[$field_column_mapping[$title_index]] !== 0) {
+				if (isset($existing_entry)) {
+					$post_data["title"] = $existing_entry["title"];
+				} else {
+					$entry_number++;
+					$output .= '<li>'.$LANG->line('import_data_stage4_row_error').$entry_number.' '.$LANG->line('import_data_stage4_no_title').'</li>'."\n";
+					continue;
+				}
+			}
+
+			// -----------------------------------------
+
+			// Look up the existing categories and groups
 			if (!empty($post_data["entry_id"]) && $post_data["entry_id"] !== 0 && in_array($post_data["entry_id"], $added_entry_ids)) {
 				$query = 'SELECT cat_id
 								FROM exp_category_posts
@@ -196,7 +232,7 @@ require_once('classes/field_type.class.php');
 					$post_data["category"][] = $category_id['cat_id'];
 				}
 			}
-			if (!empty($field_column_mapping[1])) {
+			if (!empty($field_column_mapping[$category_index])) {
 				// Look up the category group id(s) associated with this weblog
 				$query = 'SELECT cat_group
 								FROM exp_weblogs
@@ -209,7 +245,7 @@ require_once('classes/field_type.class.php');
 				if ($query->num_rows > 0)
 					$cat_group_ids = explode('|', $cat_group_ids_raw[0]['cat_group']);
 				// Look up the category id(s) associated with each category group
-				foreach($field_column_mapping[1] as $category) {
+				foreach($field_column_mapping[$category_index] as $category) {
 					if (isset($input_row[$category]) && (!empty($input_row[$category]) || $input_row[$category] === 0)) {
 						foreach ($cat_group_ids as $cat_group_id) {
 							$query = 'SELECT  ct.cat_id
@@ -229,9 +265,86 @@ require_once('classes/field_type.class.php');
 				}
 			}
 
+			// -----------------------------------------
+
+
+			// Look up the corresonding id from username
+			if (!empty($field_column_mapping[$author_id_index])) {
+				if (empty($input_row[$field_column_mapping[$author_id_index]])) {
+					if (isset($existing_entry)) {
+						$post_data["author_id"] = $existing_entry["author_id"];
+					} else {
+						$entry_number++;
+						$output .= '<li>'.$LANG->line('import_data_stage4_row_error').$entry_number.' '.$LANG->line('import_data_stage4_no_author').' - "'.$post_data["title"].'"</li>'."\n";
+						continue;
+					}
+				} else {
+					$query = 'SELECT member_id FROM exp_members WHERE username = \''.$DB->escape_str($input_row[$field_column_mapping[$author_id_index]]).'\'';
+					$query = $DB->query($query);
+					// Author not found
+					if ($query->num_rows == 0) {
+						$entry_number++;
+						$output .= '<li>'.$LANG->line('import_data_stage4_row_error').$entry_number.' '.$LANG->line('import_data_stage4_missing_author_1').$input_row[$field_column_mapping[$author_id_index]].$LANG->line('import_data_stage4_missing_author_2').' - "'.$post_data["title"].'"</li>'."\n";
+						continue;
+					}
+					$weblog_author = $query->result;
+
+					// If not an admin (group 1), check permissions
+					if ($weblog_author[0]['member_id'] != 1) {
+						$query = 'SELECT me.member_id
+										FROM exp_members me, exp_weblog_member_groups wmg
+										WHERE me.member_id = '.$DB->escape_str($weblog_author[0]['member_id']).'
+										AND   me.group_id = wmg.group_id
+										AND   wmg.weblog_id = '.$DB->escape_str($weblog_id);
+						$query = $DB->query($query);
+						// Author not authorised
+						if ($query->num_rows == 0) {
+							$entry_number++;
+							$output .= '<li>'.$LANG->line('import_data_stage4_row_error').$entry_number.' '.$LANG->line('import_data_stage4_unauthorised_author_1').$input_row[$field_column_mapping[$author_id_index]].$LANG->line('import_data_stage4_unauthorised_author_2').' - "'.$post_data["title"].'"</li>'."\n";
+							continue;
+						}
+					}
+					// Author found
+					$post_data["author_id"] = $weblog_author[0]['member_id'];
+				}
+			}
+
+			// -----------------------------------------
+
+			// Look up if status provided is valid
+			if (!empty($field_column_mapping[$status_index])) {
+				// If empty, try and get from existing
+				if (empty($input_row[$field_column_mapping[$status_index]])) {
+					if (isset($existing_entry)) {
+						$post_data["status"] = $existing_entry["status"];
+					}
+				// If open or closed, just assign (these are the two defaults and are always valid)
+				} else if (strtolower($input_row[$field_column_mapping[$status_index]]) == 'open' || strtolower($input_row[$field_column_mapping[$status_index]]) == 'closed') {
+					$post_data["status"] = $input_row[$field_column_mapping[$status_index]];
+				// If it's something else, make sure it is valid
+				} else {
+					$query = 'SELECT st.status_id
+								 FROM exp_statuses st, exp_weblogs wb, exp_status_groups sg
+								 WHERE wb.weblog_id = '.$DB->escape_str($weblog_id).'
+								 AND   wb.site_id = '.$DB->escape_str($site_id).'
+								 AND   wb.status_group = sg.group_id
+								 AND   st.group_id = sg.group_id
+								 AND   st.status = \''.$DB->escape_str($input_row[$field_column_mapping[$status_index]]).'\'';
+					$query = $DB->query($query);
+					if ($query->num_rows == 0) {
+						$entry_number++;
+						$output .= '<li>'.$LANG->line('import_data_stage4_row_error').$entry_number.' '.$LANG->line('import_data_stage4_invalid_status_1').$input_row[$field_column_mapping[$status_index]].$LANG->line('import_data_stage4_invalid_status_2').' - "'.$post_data["title"].'"</li>'."\n";
+						continue;
+					}
+					$post_data["status"] = $input_row[$field_column_mapping[$status_index]];
+				}
+			}
+
+			// -----------------------------------------
+
 			$invalid_input = FALSE;
 			foreach ($field_column_mapping as $index => $field_id) {
-				// Ignore hard coded EE fields (title, category)
+				// Ignore hard coded EE fields (title, category, entry_date, author, status)
 				if ($index < $num_ee_special_fields) continue;
 				$index -= $num_ee_special_fields;
 
@@ -279,12 +392,9 @@ require_once('classes/field_type.class.php');
 			}
 			//echo "\n<br />&nbsp;&nbsp;&nbsp;2B - FieldType Memory: ".memory_get_usage(true)."<br />\n";
 
-			if (empty($post_data["title"]) && $post_data["title"] !== 0)
-				$invalid_input = TRUE;
-
 			if ($invalid_input) {
 					$entry_number++;
-					$output .= '<li>'.$LANG->line('import_data_stage4_missing_data').$entry_number.' - "'.$post_data["title"].'"</li>'."\n";
+					$output .= '<li>'.$LANG->line('import_data_stage4_row_error').$entry_number.' '.$LANG->line('import_data_stage4_missing_data').' - "'.$post_data["title"].'"</li>'."\n";
 					continue;
 			}
 
