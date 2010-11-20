@@ -198,7 +198,7 @@ require_once('classes/field_type.class.php');
 
 			// Default title if empty
 			if (empty($input_row[$field_column_mapping[$title_index]]) && $input_row[$field_column_mapping[$title_index]] !== 0) {
-				if (isset($existing_entry)) {
+				if (isset($existing_entry) && !empty($existing_entry)) {
 					$post_data["title"] = $existing_entry["title"];
 				} else {
 					$entry_number++;
@@ -259,7 +259,7 @@ require_once('classes/field_type.class.php');
 			// Look up the corresonding id from username
 			if (!empty($field_column_mapping[$author_id_index])) {
 				if (empty($input_row[$field_column_mapping[$author_id_index]])) {
-					if (isset($existing_entry)) {
+					if (isset($existing_entry) && !empty($existing_entry)) {
 						$post_data["author_id"] = $existing_entry["author_id"];
 					} else {
 						$entry_number++;
@@ -303,7 +303,7 @@ require_once('classes/field_type.class.php');
 			if (!empty($field_column_mapping[$status_index])) {
 				// If empty, try and get from existing
 				if (empty($input_row[$field_column_mapping[$status_index]])) {
-					if (isset($existing_entry)) {
+					if (isset($existing_entry) && !empty($existing_entry)) {
 						$post_data["status"] = $existing_entry["status"];
 					}
 				// If open or closed, just assign (these are the two defaults and are always valid)
