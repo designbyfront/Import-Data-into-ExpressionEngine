@@ -1,6 +1,8 @@
 # Import Data into ExpressionEngine - Advanced #
 This guide will detail the ways in which the Import Data Module can be extended.
 
+Please also see [the usage guide](http://github.com/designbyfront/Import-Data-into-ExpressionEngine/blob/master/README.md).
+
 <a name="contents"></a>
 ## Contents ##
 * [Introduction](#introduction)

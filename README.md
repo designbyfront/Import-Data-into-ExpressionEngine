@@ -1,6 +1,8 @@
 # Import Data into ExpressionEngine #
 An ExpressionEngine Module that allows easy import of data into ExpressionEngine
 
+Please also see [the advanced usage guide](http://github.com/designbyfront/Import-Data-into-ExpressionEngine/blob/master/README-advanced.md).
+
 <a name="contents"></a>
 ## Contents ##
 * [Introduction](#introduction)
@@ -49,14 +51,14 @@ In no event unless required by applicable law or agreed to in writing will any c
 ### Supported Input Types ###
 * CSV file
 
-Additional input types can be easily added. Please see [the advanced usage guide](https://github.com/designbyfront/Import-Data-into-ExpressionEngine/blob/master/README-advanced.md#addinginputtype).
+Additional input types can be easily added. Please see [the advanced usage guide](http://github.com/designbyfront/Import-Data-into-ExpressionEngine/blob/master/README-advanced.md#addinginputtype).
 
 ### Supported EE Fields ###
-* Title
-* Category
-* Entry Date
-* Author
-* Status
+* Title [provide string title]
+* Category [provide string category]
+* Entry Date [provide timestamp or string which can be parsed by `strtotime`]
+* Author [provide string username]
+* Status [provide string status]
 
 ### Supported Custom Field Types ###
 * Text input [text]
@@ -68,7 +70,7 @@ Additional input types can be easily added. Please see [the advanced usage guide
 * [FF Checkbox](http://pixelandtonic.com/fieldframe/docs/ff-checkbox) [ff_checkbox]
 * [Wygwam](http://pixelandtonic.com/wygwam) [wygwam]
 
-Additional field types can be easily added. Please see [the advanced usage guide](https://github.com/designbyfront/Import-Data-into-ExpressionEngine/blob/master/README-advanced.md#addingfieldtype).
+Additional field types can be easily added. Please see [the advanced usage guide](http://github.com/designbyfront/Import-Data-into-ExpressionEngine/blob/master/README-advanced.md#addingfieldtype).
 
 ### Supported Extensions ###
 * [Gypsy](http://brandon-kelly.com/gypsy)
@@ -239,7 +241,7 @@ __Warnings__ are significant events which occur during import. The import will c
 
 * __Categories are not being imported successfully__<br />
 Are you using the "_SC Category Select_" fieldtype? This fieldtype will cause the standard category submission to return empty, and so they will not be imported. Disable this fieldtype, import the data and then enable after.<br />
-[Thanks to [Paul Bellamy](https://github.com/bellamystudio) for this tip]
+[Thanks to [Paul Bellamy](http://github.com/bellamystudio) for this tip]
 
 <hr />
 
