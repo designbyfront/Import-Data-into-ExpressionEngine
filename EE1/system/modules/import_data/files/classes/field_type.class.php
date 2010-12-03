@@ -119,12 +119,21 @@ class Field_type {
 			return array();
 
 		$pieces = explode('#', $this->relationships[$this->column_index]);
-		$query = 'SELECT entry_id
-							FROM exp_weblog_data
-							WHERE site_id = '.$DB->escape_str($this->site_id).'
-							AND   weblog_id = '.$DB->escape_str($pieces[0]).'
-							AND   field_id_'.$DB->escape_str($pieces[1]).' = \''.$DB->escape_str($this->value).'\'
-							LIMIT 1';
+		if (empty($pieces[1])) {
+			$query = 'SELECT entry_id
+								FROM exp_weblog_titles
+								WHERE site_id = '.$DB->escape_str($this->site_id).'
+								AND   weblog_id = '.$DB->escape_str($pieces[0]).'
+								AND   title = \''.$DB->escape_str($this->value).'\'
+								LIMIT 1';
+		} else {
+			$query = 'SELECT entry_id
+								FROM exp_weblog_data
+								WHERE site_id = '.$DB->escape_str($this->site_id).'
+								AND   weblog_id = '.$DB->escape_str($pieces[0]).'
+								AND   field_id_'.$DB->escape_str($pieces[1]).' = \''.$DB->escape_str($this->value).'\'
+								LIMIT 1';
+		}
 		//echo "<br /><br />\n\n".$query;
 
 		$query = $DB->query($query);
