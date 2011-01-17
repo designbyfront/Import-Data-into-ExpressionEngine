@@ -300,7 +300,7 @@ require_once('classes/field_type.class.php');
 			// -----------------------------------------
 
 			// Look up if status provided is valid
-			if (!empty($field_column_mapping[$status_index])) {
+			//if (!empty($field_column_mapping[$status_index])) {
 				// If empty, try and get from existing
 				if (empty($input_row[$field_column_mapping[$status_index]])) {
 					if (isset($existing_entry) && !empty($existing_entry)) {
@@ -326,7 +326,7 @@ require_once('classes/field_type.class.php');
 					}
 					$post_data["status"] = $input_row[$field_column_mapping[$status_index]];
 				}
-			}
+			//}
 
 			// -----------------------------------------
 
