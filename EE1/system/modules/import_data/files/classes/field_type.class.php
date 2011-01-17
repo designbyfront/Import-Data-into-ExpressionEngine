@@ -138,6 +138,8 @@ class Field_type {
 
 		$query = $DB->query($query);
 		$existing_entry = $query->result;
+		if (empty($existing_entry))
+			return array();
 		$existing_entry = $existing_entry[0];
 		return array('field_id_'.$this->field['field_id'] => $existing_entry['entry_id']);
 	}
