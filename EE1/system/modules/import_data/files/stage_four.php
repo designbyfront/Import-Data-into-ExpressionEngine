@@ -19,7 +19,7 @@
 require_once('classes/submission.class.php');
 require_once('classes/field_type.class.php');
 
-	global $DSP, $LANG, $DB, $FNS;
+	global $DSP, $LANG, $DB, $FNS, $log_notifications, $notifications, $notifications_count;
 
 	// insert_data - Takes in all data provides by previous steps. Constructs POST data and POSTs to EE publish entry
 	// @param site_id                     int     ID of the site where the entry is to be posted to                    (selected in stage 1)
@@ -32,7 +32,7 @@ require_once('classes/field_type.class.php');
 	function insert_data($site_id, $weblog_id, $input_data_type, $input_data_location, $unique_columns, $field_column_mapping, $column_field_replationship) {
 
 		//echo "\n<br />1 - Function Memory: ".memory_get_usage(true)."<br /><br />\n\n";
-		global $LANG, $DSP, $DB;
+		global $LANG, $DSP, $DB, $log_notifications, $notifications, $notifications_count;
 		$added_entry_ids = array(); // Array of entries which have already been added
 
 		// Hard coded EE fields (title, category, entry_date, author, status)
@@ -174,23 +174,35 @@ require_once('classes/field_type.class.php');
 								AND   wd.site_id = '.$DB->escape_str($site_id).'
 								AND   wd.weblog_id = '.$DB->escape_str($weblog_id);
 
+				$unique_notification = '';
 				foreach($unique_columns as $unique_column) {
-					if ($unique_column === "0")
+					if ($unique_column === "0") {
 						$query .=  '		AND   wt.title = \''.$DB->escape_str($input_row[$field_column_mapping[$title_index]]).'\'';
-					else
+						$unique_notification .= 'Title = \''.$input_row[$field_column_mapping[$title_index]].'\', ';
+					} else {
 						$query .=  '		AND   wd.field_id_'.$DB->escape_str($weblog_fields[$unique_column-1]['field_id']).' = \''.$DB->escape_str($input_row[$field_column_mapping[$unique_column+($num_ee_special_fields-1)]]).'\'';
+						$unique_notification .= $weblog_fields[$unique_column-1]['field_label'].' = \''.$input_row[$field_column_mapping[$unique_column+($num_ee_special_fields-1)]].'\', ';
+					}
 				}
 
-				$query .= '				 LIMIT 1';
+				$query .= '				 LIMIT 2';
 				//$query."<br />\n"
 				$query = $DB->query($query);
 				$existing_entry = $query->result;
-				//var_dump($existing_entry);
-				unset($query);
+				//var_dump($unique_notification);
+
 				if ($existing_entry !== NULL && isset($existing_entry[0])) {
 					$existing_entry = $existing_entry[0];
 					$post_data["entry_id"] = $existing_entry["entry_id"];
+
+					if ($query->num_rows > 1) {
+						$unique_notification =  substr($unique_notification,0,-2);
+						log_notification($LANG->line('import_data_stage4_notification_row_1').($entry_number+1).$LANG->line('import_data_stage4_notification_row_2').$LANG->line('import_data_stage4_notification_unique_1').$unique_notification.$LANG->line('import_data_stage4_notification_unique_2').'#'.$existing_entry["entry_id"].$LANG->line('import_data_stage4_notification_unique_3'));
+					}
+
 				}
+				unset($query);
+				unset($unique_notification);
 			}
 			//echo "\n<br />&nbsp;&nbsp;&nbsp;2A - Unique Check Memory: ".memory_get_usage(true)."<br />\n";
 
@@ -342,6 +354,7 @@ require_once('classes/field_type.class.php');
 
 				// Create post data from field_type class
 				$field_type_object = new Field_Type($index,
+																$entry_number,
 																$field_id,
 																$site_id,
 																$weblog_id,
@@ -350,23 +363,23 @@ require_once('classes/field_type.class.php');
 																$existing_entry,
 																$added_entry_ids,
 																$column_field_replationship);
-				if (($field_post = $field_type_object->post_value()) === FALSE && $weblog_fields[$index]['field_required'] == 'y') {
+				$field_post = array();
+				if (($field_return = $field_type_object->post_value()) === FALSE && $weblog_fields[$index]['field_required'] == 'y') {
 					return $LANG->line('import_data_stage4_missing_fieldtype_1').$weblog_fields[$index]['field_type'].$LANG->line('import_data_stage4_missing_fieldtype_2');
-				} else if ($field_post === FALSE) {
-					$notification = '<li>'.$LANG->line('import_data_stage4_notification_fieldtype_1').$index.$LANG->line('import_data_stage4_notification_fieldtype_2').$weblog_fields[$index]['field_type'].$LANG->line('import_data_stage4_notification_fieldtype_3').'</li>'."\n";
-					if (!isset($log_notifications[sha1($notification)])) {
-						$notifications .= $notification;
-						$notifications_count++;
-						$log_notifications[sha1($notification)] = 1;
-					} else {
-						$log_notifications[sha1($notification)]++;
-					}
+				} else if ($field_return === FALSE) {
+					log_notification($LANG->line('import_data_stage4_notification_fieldtype_1').$index.$LANG->line('import_data_stage4_notification_fieldtype_2').$weblog_fields[$index]['field_type'].$LANG->line('import_data_stage4_notification_fieldtype_3'));
 					$field_post['field_id_'.$weblog_fields[$index]['field_id']] = '';
+				} else if (isset($field_return['notification']) && !empty($field_return['notification'])) {
+					log_notification($field_return['notification']);
+				} else if (isset($field_return['post'])) {
+						$field_post = $field_return['post'];
 				}
 
 				unset($field_type_object);
 
 				if ($weblog_fields[$index]['field_required'] == 'y') {
+					if (empty($field_post))
+						$invalid_input = TRUE;
 					foreach ($field_post as $check_data) {
 						if (empty($check_data) && $check_data !== 0)
 							$invalid_input = TRUE;
@@ -422,6 +435,17 @@ require_once('classes/field_type.class.php');
 		return $final;
 	}
 
+	function log_notification($notification) {
+		global $log_notifications, $notifications, $notifications_count;
+		$notification = '<li>'.$notification.'</li>'."\n";
+		if (!isset($log_notifications[sha1($notification)])) {
+			$notifications .= $notification;
+			$notifications_count++;
+			$log_notifications[sha1($notification)] = 1;
+		} else {
+			$log_notifications[sha1($notification)]++;
+		}
+	}
 
 
 	$current_post = $_POST;

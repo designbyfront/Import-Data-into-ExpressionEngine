@@ -73,9 +73,17 @@ $L = array(
 	'import_data_stage4_of'                       => 'of ',
 	'import_data_stage4_summary_heading'          => 'entries posted successfully',
 	'import_data_stage4_notifications'            => 'Notifications',
+
+	'import_data_stage4_notification_row_1'       => 'Row ',
+	'import_data_stage4_notification_row_2'       => ': ',
+
 	'import_data_stage4_notification_fieldtype_1' => 'A non-required field (',
 	'import_data_stage4_notification_fieldtype_2' => ') of unknown field type \'',
 	'import_data_stage4_notification_fieldtype_3' => '\' has been ignored',
+
+	'import_data_stage4_notification_unique_1'    => 'The unique field(s) [',
+	'import_data_stage4_notification_unique_2'    => '] have returned more than one corresponding entry. The first returned entry (',
+	'import_data_stage4_notification_unique_3'    => ') will be used.',
 
 	// $LANG->line('')
 

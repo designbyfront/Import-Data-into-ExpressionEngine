@@ -16,6 +16,7 @@
 class Field_type {
 
 	private $order;
+	private $entry_number;
 	private $column_index;
 	private $site_id;
 	private $weblog_id;
@@ -25,7 +26,8 @@ class Field_type {
 	private $added_ids;
 	private $relationships;
 
-	private $supported_types = array(
+	// Mapping of field types to function
+	public $supported_types = array(
 		'text'            => 'post_data_text',
 		'textarea'        => 'post_data_textarea',
 		'select'          => 'post_data_select',
@@ -37,11 +39,25 @@ class Field_type {
 		'wygwam'          => 'post_data_wygwam',
 		'sl_google_map'   => '', //Not implemented
 		'matrix'          => '', //Not implemented
-		''                => ''  // Blank
+		''                => ''  //Blank
 	);
+
+	// Which fields support input from a multi-select
+	public static $multi_field_types = array(
+	);
+
+	// Which fields should be used 
+	public static $unique_field_types = array(
+		'text',
+		'textarea',
+		'select',
+		'date'
+	);
+
 
 	/*
 	 * @params order         - int corresponding to the number of previous fields executed [Incremental] (not including EE specific fields)
+	 * @params entry_number  - int corresponding to the line of the input file currently being processed
 	 * @params column_index  - int corresponding to index for the column of current row in the input file
 	 * @params site_id       - int specifying ExpressionEngine site
 	 * @params weblog_id     - int specifying ExpressionEngine weblog
@@ -51,10 +67,11 @@ class Field_type {
 	 * @params added_ids     - array of ints which correspond to the entry_id's of recently entered entries (or empty if first entry published)
 	 * @params relationships - associative array  of user defined data relationships [{column_index} => {some_weblog_id}#{some_field_id}] (or empty if not defined in stage 2)
 	 */
-	public function __construct($order, $column_index, $site_id, $weblog_id, $field, $value, $existing, $added_ids, $relationships) {
+	public function __construct($order, $entry_number, $column_index, $site_id, $weblog_id, $field, $value, $existing, $added_ids, $relationships) {
 		//echo 'Input:<pre>'.print_r(array($order, $site_id, $weblog_id, $field, $value, $existing, $added_ids, $relationships), true).'</pre>';
 
 		$this->order         = $order;
+		$this->entry_number  = $entry_number;
 		$this->column_index  = $column_index;
 		$this->site_id       = $site_id;
 		$this->weblog_id     = $weblog_id;
@@ -67,10 +84,9 @@ class Field_type {
 
 	public function post_value() {
 		if (isset($this->supported_types[$this->field['field_type']]))
-		if (isset($this->supported_types[$this->field['field_type']]))
 			if (method_exists($this, $this->supported_types[$this->field['field_type']]))
 				return $this->{$this->supported_types[$this->field['field_type']]}();
-		return false;
+		return FALSE;
 	}
 
 
@@ -82,7 +98,7 @@ class Field_type {
 				$this->value = $this->existing['field_id_'.$this->field['field_id']];
 			else
 				$this->value = '';
-		return array('field_id_'.$this->field['field_id'] => $this->value);
+		return array('post' => array('field_id_'.$this->field['field_id'] => $this->value));
 	}
 
 
@@ -105,7 +121,7 @@ class Field_type {
 				$this->value = $this->existing['field_id_'.$this->field['field_id']];
 			else
 				$this->value = '';
-		return array('field_id_'.$this->field['field_id'] => date("Y-m-d H:i A", strtotime($this->value)));
+		return array('post' => array('field_id_'.$this->field['field_id'] => date("Y-m-d H:i A", strtotime($this->value))));
 	}
 
 
@@ -114,7 +130,7 @@ class Field_type {
 		global $DB;
 
 		if ($this->value === NULL || $this->value === '')
-			return array('field_id_'.$this->field['field_id'] => $this->existing['field_id_'.$this->field['field_id']]);
+			return array('field_id_'.$this->field['field_id'] => (isset($this->existing['field_id_'.$this->field['field_id']]) ? $this->existing['field_id_'.$this->field['field_id']] : ''));
 		if (!isset($this->relationships[$this->column_index]))
 			return array();
 
@@ -139,9 +155,9 @@ class Field_type {
 		$query = $DB->query($query);
 		$existing_entry = $query->result;
 		if (empty($existing_entry))
-			return array();
+			return array('notification' => 'Row '.($this->entry_number+1).': A relationship with an existing entry ['.(empty($pieces[1]) ? 'title' : 'field_id_'.$pieces[1]).' = \''.$this->value.'\'] has not been created as the entry cannot be found.');
 		$existing_entry = $existing_entry[0];
-		return array('field_id_'.$this->field['field_id'] => $existing_entry['entry_id']);
+		return array('post' => array('field_id_'.$this->field['field_id'] => $existing_entry['entry_id']));
 	}
 
 
@@ -175,6 +191,7 @@ class Field_type {
  - If given value and not already updated this time, overwrite
  - If given value and already updated this time, keep existing
 */
+		$notification = '';
 
 		// If given no relationship, send empty
 		if (!isset($this->relationships[$this->column_index]))
@@ -226,9 +243,12 @@ class Field_type {
 		$existing_entry = $query->result;
 		if (isset($existing_entry[0]['entry_id']))
 			$previous_entries[] = $existing_entry[0]['entry_id'];
+		else
+			$notification = 'Row '.($this->entry_number+1).': A <b>Playa</b> relationship with an existing entry ['.(($pieces[1] == 0) ? 'title' : 'field_id_'.$pieces[1]).' = \''.$this->value.'\'] has not been created as the entry cannot be found.';
+
 		$previous_entries = array_unique($previous_entries);
 
-		return array('field_id_'.$this->field['field_id'] => array('old' => '', 'selections' => $previous_entries));
+		return array('post' => array('field_id_'.$this->field['field_id'] => array('old' => '', 'selections' => $previous_entries)), 'notification' => $notification);
 	}
 
 
@@ -250,17 +270,17 @@ class Field_type {
 		else
 			$this->value = (bool)$this->value;
 
-		return array('field_id_'.$this->field['field_id'] => ($this->value ? 'y' : 'n'));
+		return array('post' => array('field_id_'.$this->field['field_id'] => ($this->value ? 'y' : 'n')));
 	}
 
 
 
 	private function post_data_wygwam() {
 		if ($this->value === NULL || $this->value === '')
-			$this->value = $this->existing['field_id_'.$this->field['field_id']];
+			$this->value = (isset($this->existing['field_id_'.$this->field['field_id']]) ? $this->existing['field_id_'.$this->field['field_id']] : '');
 		$data_array = array('old' => $this->existing['field_id_'.$this->field['field_id']],
 												 'new' => $this->value);
-		return array('field_id_'.$this->field['field_id'] => $data_array);
+		return array('post' => array('field_id_'.$this->field['field_id'] => $data_array));
 	}
 
 
