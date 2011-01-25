@@ -184,7 +184,7 @@ require_once('classes/field_type.class.php');
 										.  $DSP->table_qcell('itemTitle', $field_title, '20%')
 										.  $DSP->table_qcell('', $field_text, '10%');
 										if (in_array($row['field_type'], $multi_field_types)) {
-											$form_table .= $DSP->table_qcell('', $DSP->input_select_header('field_column_select[1][]', 'y', '4', '85%').$field_column_select_populate.$DSP->input_select_footer(), '10%');
+											$form_table .= $DSP->table_qcell('', $DSP->input_select_header('field_column_select['.$i.'][]', 'y', '4', '85%').$field_column_select_populate.$DSP->input_select_footer(), '10%');
 										} else {
 											$form_table .= $DSP->table_qcell('', $DSP->input_select_header('field_column_select['.$i.']').$field_column_select_populate.$DSP->input_select_footer(), '10%');
 										}

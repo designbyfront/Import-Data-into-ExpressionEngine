@@ -353,13 +353,21 @@ require_once('classes/field_type.class.php');
 					$weblog_fields[$index]['field_type'] = $ff_fieldtypes[$weblog_fields[$index]['field_type']];
 
 				// Create post data from field_type class
+				if (is_array($field_id)) {
+					$value = array();
+					foreach($field_id as $single_field_id) {
+						$value[] = (isset($input_row[$single_field_id]) ? $input_row[$single_field_id] : '');
+					}
+				} else {
+					$value = (isset($input_row[$field_id]) ? $input_row[$field_id] : '');
+				}
 				$field_type_object = new Field_Type($index,
 																$entry_number,
 																$field_id,
 																$site_id,
 																$weblog_id,
 																$weblog_fields[$index],
-																(isset($input_row[$field_id]) ? $input_row[$field_id] : ''),
+																$value,
 																$existing_entry,
 																$added_entry_ids,
 																$column_field_replationship);
@@ -369,11 +377,12 @@ require_once('classes/field_type.class.php');
 				} else if ($field_return === FALSE) {
 					log_notification($LANG->line('import_data_stage4_notification_fieldtype_1').$index.$LANG->line('import_data_stage4_notification_fieldtype_2').$weblog_fields[$index]['field_type'].$LANG->line('import_data_stage4_notification_fieldtype_3'));
 					$field_post['field_id_'.$weblog_fields[$index]['field_id']] = '';
-				} else if (isset($field_return['notification']) && !empty($field_return['notification'])) {
-					log_notification($field_return['notification']);
-				} else if (isset($field_return['post'])) {
-						$field_post = $field_return['post'];
 				}
+
+				if (isset($field_return['notification']) && !empty($field_return['notification']))
+					log_notification($field_return['notification']);
+				if (isset($field_return['post']))
+					$field_post = $field_return['post'];
 
 				unset($field_type_object);
 
@@ -435,15 +444,21 @@ require_once('classes/field_type.class.php');
 		return $final;
 	}
 
-	function log_notification($notification) {
+	function log_notification($returned_notifications) {
 		global $log_notifications, $notifications, $notifications_count;
-		$notification = '<li>'.$notification.'</li>'."\n";
-		if (!isset($log_notifications[sha1($notification)])) {
-			$notifications .= $notification;
-			$notifications_count++;
-			$log_notifications[sha1($notification)] = 1;
-		} else {
-			$log_notifications[sha1($notification)]++;
+
+		if (!is_array($returned_notifications))
+			$returned_notifications = array($returned_notifications);
+
+		foreach($returned_notifications as $notification) {
+			$notification = '<li>'.$notification.'</li>'."\n";
+			if (!isset($log_notifications[sha1($notification)])) {
+				$notifications .= $notification;
+				$notifications_count++;
+				$log_notifications[sha1($notification)] = 1;
+			} else {
+				$log_notifications[sha1($notification)]++;
+			}
 		}
 	}
 
