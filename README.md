@@ -195,9 +195,9 @@ Images from [Devot:ee listing](http://devot-ee.com/add-ons/import-data-into-expr
 
 This is the short version of the todo list. This will take a while...
 
-* Mulidata custom fields (Playa)
-* Delimited data for mulitdata fields (Categories, Playa)
-* More end user warnings / notifications
+* <del>Mulidata custom fields (Playa)</del>
+* <del>Delimited data for mulitdata fields (Categories, Playa)</del>
+* <del>More end user warnings / notifications</del>
 * Upload file field support
 * Better code structure
     * <del>Make it easier to add new input types</del>
