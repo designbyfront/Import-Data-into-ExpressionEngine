@@ -82,7 +82,7 @@ require_once('classes/field_type.class.php');
 
 		// Populate array with all fields in the weblog
 		// Select normal fields
-		$query = $DB->query('SELECT wf.field_id, wf.field_label, wf.field_name, wf.field_required, wf.field_type, '.($gypsy_installed ? 'wf.field_is_gypsy' : '\'n\' as field_is_gypsy').'
+		$query = $DB->query('SELECT wf.field_id, wf.field_label, wf.field_name, wf.field_required, wf.field_type, wf.field_fmt, '.($gypsy_installed ? 'wf.field_is_gypsy' : '\'n\' as field_is_gypsy').'
 									 FROM exp_weblogs wb, exp_field_groups fg, exp_weblog_fields wf
 									 WHERE wb.site_id = \''.$DB->escape_str($site_id).'\'
 									 AND   wb.site_id = fg.site_id
@@ -97,7 +97,7 @@ require_once('classes/field_type.class.php');
 
 		if ($gypsy_installed) {
 			// Select gypsy fields
-			$query = $DB->query('SELECT wf.gypsy_weblogs, wf.field_id, wf.field_name, wf.field_label, wf.field_required, wf.field_type
+			$query = $DB->query('SELECT wf.gypsy_weblogs, wf.field_id, wf.field_name, wf.field_label, wf.field_required, wf.field_type, wf.field_fmt
 										 FROM exp_weblog_fields wf
 										 WHERE wf.site_id = \''.$DB->escape_str($site_id).'\'
 										 AND   wf.field_is_gypsy = \'y\'
@@ -110,6 +110,7 @@ require_once('classes/field_type.class.php');
 													 'field_name' => $row['field_name'],
 													 'field_required' => $row['field_required'],
 													 'field_type' => $row['field_type'],
+													 'field_fmt' => $row['field_fmt'],
 													 'field_is_gypsy' => 'y');
 				}
 			}

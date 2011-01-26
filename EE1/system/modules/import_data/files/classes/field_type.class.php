@@ -68,7 +68,7 @@ class Field_type {
 	 *                         -or- array of ints if type in 'multi_field_types' array
 	 * @params site_id       - int specifying ExpressionEngine site
 	 * @params weblog_id     - int specifying ExpressionEngine weblog
-	 * @params field         - associative array containing details about the field type
+	 * @params field         - associative array containing details about the field
 	 * @params value         - string value being put into the field
 	 *                         -or- array of strings if type in 'multi_field_types' array
 	 *                         -or- array of array of strings if type in 'delimiter_field_types' array
@@ -113,7 +113,7 @@ class Field_type {
 				$this->value = $this->existing['field_id_'.$this->field['field_id']];
 			else
 				$this->value = '';
-		return array('post' => array('field_id_'.$this->field['field_id'] => $this->value));
+		return array('post' => array('field_id_'.$this->field['field_id'] => $this->value, 'field_ft_'.$this->field['field_id'] => $this->field['field_fmt']));
 	}
 
 
