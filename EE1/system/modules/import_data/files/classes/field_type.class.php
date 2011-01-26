@@ -47,6 +47,11 @@ class Field_type {
 		'playa'
 	);
 
+	// Which fields support input from a multi-select
+	public static $delimiter_field_types = array(
+		'playa'
+	);
+
 	// Which fields should be used 
 	public static $unique_field_types = array(
 		'text',
@@ -66,6 +71,7 @@ class Field_type {
 	 * @params field         - associative array containing details about the field type
 	 * @params value         - string value being put into the field
 	 *                         -or- array of strings if type in 'multi_field_types' array
+	 *                         -or- array of array of strings if type in 'delimiter_field_types' array
 	 * @params existing      - ID of existing full entry if found in database (empty if not found)
 	 * @params added_ids     - array of ints which correspond to the entry_id's of recently entered entries (or empty if first entry published)
 	 * @params relationships - associative array  of user defined data relationships [{column_index} => {some_weblog_id}#{some_field_id}] (or empty if not defined in stage 2)
@@ -136,7 +142,7 @@ class Field_type {
 
 
 	private function post_data_rel() {
-		global $DB;
+		global $DB, $LANG;
 
 		if ($this->value === NULL || $this->value === '')
 			return array('post' => array('field_id_'.$this->field['field_id'] => (isset($this->existing['field_id_'.$this->field['field_id']]) ? $this->existing['field_id_'.$this->field['field_id']] : '')));
@@ -164,7 +170,7 @@ class Field_type {
 		$query = $DB->query($query);
 		$existing_entry = $query->result;
 		if (empty($existing_entry))
-			return array('notification' => 'Row '.($this->entry_number+1).': A relationship with an existing entry ['.(empty($pieces[1]) ? 'title' : 'field_id_'.$pieces[1]).' = \''.$this->value.'\'] has not been created as the entry cannot be found.');
+			return array('notification' => $this->format_notification($LANG->line('import_data_stage4_notification_rel_1').(empty($pieces[1]) ? 'title' : 'field_id_'.$pieces[1]).$LANG->line('import_data_stage4_notification_equals_quote').$this->value.$LANG->line('import_data_stage4_notification_rel_2')));
 		$existing_entry = $existing_entry[0];
 		return array('post' => array('field_id_'.$this->field['field_id'] => $existing_entry['entry_id']));
 	}
@@ -192,7 +198,7 @@ class Field_type {
 
 
 	private function post_data_playa() {
-		global $DB;
+		global $DB, $LANG;
 
 /*
  - If given no relationship, send empty
@@ -200,19 +206,23 @@ class Field_type {
  - If given value and not already updated this time, overwrite
  - If given value and already updated this time, keep existing
 */
+
+		$notification = array();
+
 		// If given no relationship, send empty
 		if (is_array($this->column_index)) {
 			foreach ($this->column_index as $key => $index) {
 				if (!isset($this->relationships[$index])) {
+					$notification[] = $this->format_notification($LANG->line('import_data_stage4_notification_playa_defined_1').($index+1).$LANG->line('import_data_stage4_notification_playa_defined_2'), TRUE);
 					unset($this->column_index[$key]);
 					unset($this->value[$key]);
 				}
 			}
 			if (empty($this->column_index))
-				return array('post' => array('field_id_'.$this->field['field_id'] => array()));
+				return array('post' => array('field_id_'.$this->field['field_id'] => array('old' => '', 'selections' => array())), 'notification' => (empty($notification) ? '' : $notification));
 		} else {
 			if (!isset($this->relationships[$this->column_index]))
-				return array('post' => array('field_id_'.$this->field['field_id'] => array()));
+				return array('post' => array('field_id_'.$this->field['field_id'] => array('old' => '', 'selections' => array())), 'notification' => (empty($notification) ? '' : $notification));
 			$this->column_index = array($this->column_index);
 		}
 
@@ -235,44 +245,55 @@ class Field_type {
 		// If given no value, send existing
 		$return_existing = TRUE;
 		foreach($this->value as $given_value)
-			if ($given_value !== NULL || $given_value !== '')
+			if (!empty($given_value) || $given_value == 0)
 				$return_existing = FALSE;
 		if ($return_existing)
-			return array('post' => array('field_id_'.$this->field['field_id'] => array('old' => '', 'selections' => $previous_entries)));
+			return array('post' => array('field_id_'.$this->field['field_id'] => array('old' => '', 'selections' => $previous_entries)), 'notification' => (empty($notification) ? '' : $notification));
 
 		// If given value and not already updated, overwrite previous_entries
 		if (isset($this->existing['entry_id']) && !in_array($this->existing['entry_id'], $this->added_ids))
 			$previous_entries = array(0 => '');
 
-		$notification = array();
 		$i = 0;
 		foreach ($this->column_index as $key => $index) {
-			if (empty($this->value[$i]))
+			if (empty($this->value[$i])) {
+				$i++;
 				continue;
-			$pieces = explode('#', $this->relationships[$index]);
-			// If $pieces[1] is 0, we have selected a title
-			if ($pieces[1] == 0) {
-				$query = 'SELECT entry_id, title as field_id_'.$DB->escape_str($this->field['field_id']).'
-									FROM exp_weblog_titles
-									WHERE site_id = '.$DB->escape_str($this->site_id).'
-									AND   weblog_id = '.$DB->escape_str($pieces[0]).'
-									AND   title = \''.$DB->escape_str($this->value[$i]).'\'
-									LIMIT 1';
-			} else {
-				$query = 'SELECT entry_id, field_id_'.$DB->escape_str($this->field['field_id']).'
-									FROM exp_weblog_data
-									WHERE site_id = '.$DB->escape_str($this->site_id).'
-									AND   weblog_id = '.$DB->escape_str($pieces[0]).'
-									AND   field_id_'.$DB->escape_str($pieces[1]).' = \''.$DB->escape_str($this->value[$i]).'\'
-									LIMIT 1';
 			}
-			//echo "<br />\n".$query."<br /><br />\n";
-			$query = $DB->query($query);
-			$existing_entry = $query->result;
-			if (isset($existing_entry[0]['entry_id']))
-				$previous_entries[] = $existing_entry[0]['entry_id'];
-			else
-				$notification[] = 'Row '.($this->entry_number+1).': A <b>Playa</b> relationship with an existing entry ['.(($pieces[1] == 0) ? 'title' : 'field_id_'.$pieces[1]).' = \''.$this->value[$i].'\'] has not been created as the entry cannot be found.';
+
+			$pieces = explode('#', $this->relationships[$index]);
+
+			if (!is_array($this->value[$i]))
+				$this->value[$i] = array($this->value[$i]);
+
+			$j = 0;
+			foreach ($this->value[$i] as $given_value) {
+				// If $pieces[1] is 0, we have selected a title
+				if ($pieces[1] == 0) {
+					$query = 'SELECT entry_id, title as field_id_'.$DB->escape_str($this->field['field_id']).'
+										FROM exp_weblog_titles
+										WHERE site_id = '.$DB->escape_str($this->site_id).'
+										AND   weblog_id = '.$DB->escape_str($pieces[0]).'
+										AND   title = \''.$DB->escape_str($given_value).'\'
+										LIMIT 1';
+				} else {
+					$query = 'SELECT entry_id, field_id_'.$DB->escape_str($this->field['field_id']).'
+										FROM exp_weblog_data
+										WHERE site_id = '.$DB->escape_str($this->site_id).'
+										AND   weblog_id = '.$DB->escape_str($pieces[0]).'
+										AND   field_id_'.$DB->escape_str($pieces[1]).' = \''.$DB->escape_str($given_value).'\'
+										LIMIT 1';
+				}
+				//echo "<br />\n".$query."<br /><br />\n";
+				$query = $DB->query($query);
+				$existing_entry = $query->result;
+				if (isset($existing_entry[0]['entry_id']))
+					$previous_entries[] = $existing_entry[0]['entry_id'];
+				else
+					$notification[] = $this->format_notification($LANG->line('import_data_stage4_notification_playa_missing_1').(($pieces[1] == 0) ? 'title' : 'field_id_'.$pieces[1]).$LANG->line('import_data_stage4_notification_equals_quote').$given_value.$LANG->line('import_data_stage4_notification_playa_missing_2'));
+				$j++;
+			}
+
 			$i++;
 		}
 		$previous_entries = array_unique($previous_entries);
@@ -365,5 +386,15 @@ class Field_type {
 		 */
 
 	}
+
+	// ---- USEFUL FUNCTIONS ---------------------
+
+	private function format_notification($notification, $global = FALSE) {
+		global $LANG;
+		return ($global ? '' : $LANG->line('import_data_stage4_notification_row_1').($this->entry_number+1).$LANG->line('import_data_stage4_notification_row_2')).$notification;
+	}
+
+
+
 
 }
