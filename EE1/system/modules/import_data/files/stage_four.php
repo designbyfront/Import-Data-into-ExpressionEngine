@@ -229,7 +229,6 @@ require_once('classes/field_type.class.php');
 								WHERE entry_id = '.$DB->escape_str($post_data["entry_id"]);
 				$query = $DB->query($query);
 				$existing_category_ids = $query->result;
-				var_dump($existing_category_ids);
 				foreach ($existing_category_ids as $category_id) {
 					$post_data["category"][] = $category_id['cat_id'];
 				}
