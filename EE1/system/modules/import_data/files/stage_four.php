@@ -148,7 +148,7 @@ require_once('classes/field_type.class.php');
 			$post_data = array();
 			$post_data["site_id"] = $site_id;
 			$post_data["weblog_id"] = $weblog_id;
-			$post_data["title"] = $input_row[$field_column_mapping[$title_index]];
+			$post_data["title"] = (isset($input_row[$field_column_mapping[$title_index]]) ? $input_row[$field_column_mapping[$title_index]] : '');
 			$post_data["category"] = array(); // Calculated later
 			$post_data["entry_date"] = (empty($input_row[$field_column_mapping[$entry_date_index]]) ? date("Y-m-d H:i A") : date("Y-m-d H:i A", (is_numeric($input_row[$field_column_mapping[$entry_date_index]]) ? $input_row[$field_column_mapping[$entry_date_index]] : strtotime($input_row[$field_column_mapping[$entry_date_index]].' '.date('T')))));
 			$post_data["author_id"] = ''; // Calcaulted later
@@ -210,7 +210,7 @@ require_once('classes/field_type.class.php');
 			// -----------------------------------------
 
 			// Default title if empty
-			if (empty($input_row[$field_column_mapping[$title_index]]) && $input_row[$field_column_mapping[$title_index]] !== 0) {
+			if (!isset($input_row[$field_column_mapping[$title_index]]) || (empty($input_row[$field_column_mapping[$title_index]]) && $input_row[$field_column_mapping[$title_index]] !== 0)) {
 				if (isset($existing_entry) && !empty($existing_entry)) {
 					$post_data["title"] = $existing_entry["title"];
 				} else {
