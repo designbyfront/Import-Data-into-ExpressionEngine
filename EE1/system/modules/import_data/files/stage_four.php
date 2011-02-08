@@ -26,10 +26,11 @@ require_once('classes/field_type.class.php');
 	// @param weblog_id                   int     ID of the weblog where the entry is to be posted to                  (selected in stage 1)
 	// @param input_data_type             string  Type of data file to be processed                                    (selected in stage 1)
 	// @param input_data_location         string  Location of data file to be processed                                (uploaded in stage 2)
-	// @param unique_columns              array   Columns which have bee selected as unique                            (selected in stage 3)
+	// @param unique_columns              array   Fields which have been selected as unique                            (selected in stage 3)
+	// @param addition_columns            array   Fields which have been selected to not be overwritten                (selected in stage 3)
 	// @param field_column_mapping        array   Mapping of weblog fields to data file columns                        (selected in stage 3)
 	// @param column_field_replationship  array   Mapping of relationships between data file column and weblog field   (selected in stage 2)
-	function insert_data($site_id, $weblog_id, $input_data_type, $input_data_location, $delimiter_columns, $unique_columns, $field_column_mapping, $column_field_replationship) {
+	function insert_data($site_id, $weblog_id, $input_data_type, $input_data_location, $delimiter_columns, $unique_columns, $addition_columns, $field_column_mapping, $column_field_replationship) {
 
 		//echo "\n<br />1 - Function Memory: ".memory_get_usage(true)."<br /><br />\n\n";
 		global $LANG, $DSP, $DB, $log_notifications, $notifications, $notifications_count;
@@ -224,7 +225,8 @@ require_once('classes/field_type.class.php');
 
 			// Look up the existing categories and groups
 			$field_column_mapping[$category_index] = array_values(array_filter($field_column_mapping[$category_index]));
-			if (!empty($post_data["entry_id"]) && $post_data["entry_id"] !== 0 && (in_array($post_data["entry_id"], $added_entry_ids) || empty($field_column_mapping[$category_index]))) {
+			if (!empty($post_data["entry_id"]) && $post_data["entry_id"] !== 0 && (in_array($post_data["entry_id"], $added_entry_ids) || empty($field_column_mapping[$category_index]) || isset($addition_columns[0]))) {
+
 				$query = 'SELECT cat_id
 								FROM exp_category_posts
 								WHERE entry_id = '.$DB->escape_str($post_data["entry_id"]);
@@ -378,6 +380,11 @@ require_once('classes/field_type.class.php');
 				} else {
 					$value = (isset($input_row[$field_id]) ? $input_row[$field_id] : '');
 				}
+
+				$addition_override = FALSE;
+				if (isset($addition_columns[$index+1]))
+					$addition_override = TRUE;
+
 				//var_dump($value);
 				$field_type_object = new Field_Type($index,
 																$entry_number,
@@ -388,7 +395,8 @@ require_once('classes/field_type.class.php');
 																$value,
 																$existing_entry,
 																$added_entry_ids,
-																$column_field_replationship);
+																$column_field_replationship,
+																$addition_override);
 				$field_post = array();
 				if (($field_return = $field_type_object->post_value()) === FALSE && $weblog_fields[$index]['field_required'] == 'y') {
 					return $LANG->line('import_data_stage4_missing_fieldtype_1').$weblog_fields[$index]['field_type'].$LANG->line('import_data_stage4_missing_fieldtype_2');
@@ -498,6 +506,7 @@ require_once('classes/field_type.class.php');
 
 	$delimiter_columns = (isset($current_post['delimiter']) ? $current_post['delimiter'] : array());
 	$unique_columns = (isset($current_post['unique']) ? $current_post['unique'] : array());
+	$addition_columns = (isset($current_post['addition']) ? $current_post['addition'] : array());
 	$field_column_mapping = (isset($current_post['field_column_select']) ? $current_post['field_column_select'] : array());
 	$column_field_replationship = (isset($current_post['column_field_relation']) ? $current_post['column_field_relation'] : array());
 
@@ -517,7 +526,7 @@ require_once('classes/field_type.class.php');
 	$r = $DSP->heading($LANG->line('import_data_stage4_heading'));
 
 	//$r .= '<pre>'.print_r($current_post, true).'</pre>';
-	$r .= insert_data($site_id, $weblog_id, $input_type, $input_data_location, $delimiter_columns, $unique_columns, $field_column_mapping, $column_field_replationship);
+	$r .= insert_data($site_id, $weblog_id, $input_type, $input_data_location, $delimiter_columns, $unique_columns, $addition_columns, $field_column_mapping, $column_field_replationship);
 
 	$DSP->body .= $r;
 

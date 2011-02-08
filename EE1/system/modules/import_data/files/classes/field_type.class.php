@@ -25,6 +25,7 @@ class Field_type {
 	private $existing;
 	private $added_ids;
 	private $relationships;
+	private $addition_override;
 
 	// Mapping of field types to function
 	public $supported_types = array(
@@ -42,17 +43,19 @@ class Field_type {
 		''                => ''  //Blank
 	);
 
-	// Which fields support input from a multi-select
+// --- SETTINGS ---------------
+
+	// Fields which support input from a multi-select
 	public static $multi_field_types = array(
 		'playa'
 	);
 
-	// Which fields support input from a multi-select
+	// Fields which support input from a multi-select
 	public static $delimiter_field_types = array(
 		'playa'
 	);
 
-	// Which fields should be used 
+	// Fields which can be used as unique
 	public static $unique_field_types = array(
 		'text',
 		'textarea',
@@ -60,35 +63,42 @@ class Field_type {
 		'date'
 	);
 
+	// Fields which support addition behaviour
+	public static $addition_field_types = array(
+		'playa'
+	);
+
 
 	/*
-	 * @params order         - int corresponding to the number of previous fields executed [Incremental] (not including EE specific fields)
-	 * @params entry_number  - int corresponding to the line of the input file currently being processed
-	 * @params column_index  - int corresponding to index for the column of current row in the input file
-	 *                         -or- array of ints if type in 'multi_field_types' array
-	 * @params site_id       - int specifying ExpressionEngine site
-	 * @params weblog_id     - int specifying ExpressionEngine weblog
-	 * @params field         - associative array containing details about the field
-	 * @params value         - string value being put into the field
-	 *                         -or- array of strings if type in 'multi_field_types' array
-	 *                         -or- array of array of strings if type in 'delimiter_field_types' array
-	 * @params existing      - ID of existing full entry if found in database (empty if not found)
-	 * @params added_ids     - array of ints which correspond to the entry_id's of recently entered entries (or empty if first entry published)
-	 * @params relationships - associative array  of user defined data relationships [{column_index} => {some_weblog_id}#{some_field_id}] (or empty if not defined in stage 2)
+	 * @params order             - int corresponding to the number of previous fields executed [Incremental] (not including EE specific fields)
+	 * @params entry_number      - int corresponding to the line of the input file currently being processed
+	 * @params column_index      - int corresponding to index for the column of current row in the input file
+	 *                             -or- array of ints if type in 'multi_field_types' array
+	 * @params site_id           - int specifying ExpressionEngine site
+	 * @params weblog_id         - int specifying ExpressionEngine weblog
+	 * @params field             - associative array containing details about the field
+	 * @params value             - string value being put into the field
+	 *                             -or- array of strings if type in 'multi_field_types' array
+	 *                             -or- array of array of strings if type in 'delimiter_field_types' array
+	 * @params existing          - ID of existing full entry if found in database (empty if not found)
+	 * @params added_ids         - array of ints which correspond to the entry_id's of recently entered entries (or empty if first entry published)
+	 * @params relationships     - associative array  of user defined data relationships [{column_index} => {some_weblog_id}#{some_field_id}] (or empty if not defined in stage 2)
+	 * @params addition_override - boolean whether to override default behaviour of overwriting and add to field [only applicable for field types in addition_field_types] (defined in stage 3)
 	 */
-	public function __construct($order, $entry_number, $column_index, $site_id, $weblog_id, $field, $value, $existing, $added_ids, $relationships) {
+	public function __construct($order, $entry_number, $column_index, $site_id, $weblog_id, $field, $value, $existing, $added_ids, $relationships, $addition_override) {
 		//echo 'Input:<pre>'.print_r(array($order, $site_id, $weblog_id, $field, $value, $existing, $added_ids, $relationships), true).'</pre>';
 
-		$this->order         = $order;
-		$this->entry_number  = $entry_number;
-		$this->column_index  = $column_index;
-		$this->site_id       = $site_id;
-		$this->weblog_id     = $weblog_id;
-		$this->field         = $field;
-		$this->value         = $value;
-		$this->existing      = $existing;
-		$this->added_ids     = $added_ids;
-		$this->relationships = $relationships;
+		$this->order             = $order;
+		$this->entry_number      = $entry_number;
+		$this->column_index      = $column_index;
+		$this->site_id           = $site_id;
+		$this->weblog_id         = $weblog_id;
+		$this->field             = $field;
+		$this->value             = $value;
+		$this->existing          = $existing;
+		$this->added_ids         = $added_ids;
+		$this->relationships     = $relationships;
+		$this->addition_override = $addition_override;
 	}
 
 	/*
@@ -209,23 +219,6 @@ class Field_type {
 
 		$notification = array();
 
-		// If given no relationship, send empty
-		if (is_array($this->column_index)) {
-			foreach ($this->column_index as $key => $index) {
-				if (!isset($this->relationships[$index])) {
-					$notification[] = $this->format_notification($LANG->line('import_data_stage4_notification_playa_defined_1').($index+1).$LANG->line('import_data_stage4_notification_playa_defined_2'), TRUE);
-					unset($this->column_index[$key]);
-					unset($this->value[$key]);
-				}
-			}
-			if (empty($this->column_index))
-				return array('post' => array('field_id_'.$this->field['field_id'] => array('old' => '', 'selections' => array())), 'notification' => (empty($notification) ? '' : $notification));
-		} else {
-			if (!isset($this->relationships[$this->column_index]))
-				return array('post' => array('field_id_'.$this->field['field_id'] => array('old' => '', 'selections' => array())), 'notification' => (empty($notification) ? '' : $notification));
-			$this->column_index = array($this->column_index);
-		}
-
 		$previous_entries = array(0 => '');
 		preg_match_all('/\[([0-9]+?)\]/', (isset($this->existing['field_id_'.$this->field['field_id']]) ? $this->existing['field_id_'.$this->field['field_id']] : ''), $matches);
 		if (!empty($matches[1])) {
@@ -242,6 +235,24 @@ class Field_type {
 				$previous_entries[] = $get_previous_entry['rel_child_id'];
 		}
 
+
+		// If given no relationship, send empty
+		if (is_array($this->column_index)) {
+			foreach ($this->column_index as $key => $index) {
+				if (!isset($this->relationships[$index])) {
+					$notification[] = $this->format_notification($LANG->line('import_data_stage4_notification_playa_defined_1').($index+1).$LANG->line('import_data_stage4_notification_playa_defined_2'), TRUE);
+					unset($this->column_index[$key]);
+					unset($this->value[$key]);
+				}
+			}
+			if (empty($this->column_index))
+				return array('post' => array('field_id_'.$this->field['field_id'] => array('old' => '', 'selections' => $previous_entries)), 'notification' => (empty($notification) ? '' : $notification));
+		} else {
+			if (!isset($this->relationships[$this->column_index]))
+				return array('post' => array('field_id_'.$this->field['field_id'] => array('old' => '', 'selections' => $previous_entries)), 'notification' => (empty($notification) ? '' : $notification));
+			$this->column_index = array($this->column_index);
+		}
+
 		// If given no value, send existing
 		$return_existing = TRUE;
 		foreach($this->value as $given_value)
@@ -251,7 +262,7 @@ class Field_type {
 			return array('post' => array('field_id_'.$this->field['field_id'] => array('old' => '', 'selections' => $previous_entries)), 'notification' => (empty($notification) ? '' : $notification));
 
 		// If given value and not already updated, overwrite previous_entries
-		if (isset($this->existing['entry_id']) && !in_array($this->existing['entry_id'], $this->added_ids))
+		if (isset($this->existing['entry_id']) && !in_array($this->existing['entry_id'], $this->added_ids) && !$this->addition_override)
 			$previous_entries = array(0 => '');
 
 		$i = 0;

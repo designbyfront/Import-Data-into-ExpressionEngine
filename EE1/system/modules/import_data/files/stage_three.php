@@ -16,9 +16,10 @@ require_once('classes/field_type.class.php');
 
 	function create_form_list($site_id, $weblog_id, $input_data_type, $input_data_location, $data_relations) {
 		global $LANG, $DSP, $DB;
-		$multi_field_types = Field_Type::$multi_field_types;
-		$unique_field_types = Field_Type::$unique_field_types;
+		$multi_field_types     = Field_Type::$multi_field_types;
 		$delimiter_field_types = Field_Type::$delimiter_field_types;
+		$unique_field_types    = Field_Type::$unique_field_types;
+		$addition_field_types  = Field_Type::$addition_field_types;
 
 		$input_file_obj_return = Import_data_CP::get_input_type_obj($input_data_type, $input_data_location);
 		if (!$input_file_obj_return[0])
@@ -130,8 +131,9 @@ require_once('classes/field_type.class.php');
 									.  $DSP->table_qcell('itemTitle', 'Title', '20%')
 									.  $DSP->table_qcell('', '[title] text', '15%')
 									.  $DSP->table_qcell('', $DSP->input_select_header('field_column_select[0]').$field_column_select_populate.$DSP->input_select_footer(), '10%')
-									.  $DSP->table_qcell('', '--', '10%') // no delimeter input
-									.  $DSP->table_qcell('', $DSP->input_checkbox('unique[]\' id=\'unique_title', 0).' <label for="unique_title">'.$LANG->line('import_data_unique_field').'</label>') // unique checkbox
+									.  $DSP->table_qcell('', '&nbsp;&nbsp;--', '10%') // no delimeter input
+									.  $DSP->table_qcell('', $DSP->input_checkbox('unique[]\' id=\'unique_title', 0).' <label for="unique_title">'.$LANG->line('import_data_unique_field').'</label>', '10%') // unique checkbox
+									.  $DSP->table_qcell('', '&nbsp;&nbsp;--') // no addition support
 									.  $DSP->tr_c();
 			// category field
 			$form_table .= $DSP->tr()
@@ -140,7 +142,8 @@ require_once('classes/field_type.class.php');
 									.  $DSP->table_qcell('', '[category] text', '15%')
 									.  $DSP->table_qcell('', $DSP->input_select_header('field_column_select[1][]', 'y', '4', '85%').$field_column_select_populate.$DSP->input_select_footer(), '10%')
 									.  $DSP->table_qcell('', '<label for="delimiter_category">'.$LANG->line('import_data_delimiter_field').'</label> '.$DSP->input_text('delimiter[0]', '', '5', '10', 'input', '35px', 'id=\'delimiter_category\''), '10%') // delimeter input
-									.  $DSP->table_qcell('', '--') // no unique checkbox
+									.  $DSP->table_qcell('', '&nbsp;&nbsp;--', '10%') // no unique checkbox
+									.  $DSP->table_qcell('', $DSP->input_checkbox('addition[0]\' id=\'addition_category', 0).' <label for="addition_category">'.$LANG->line('import_data_addition_field').'</label>') // addition support
 									.  $DSP->tr_c();
 			// entry_date field
 			$form_table .= $DSP->tr()
@@ -148,8 +151,9 @@ require_once('classes/field_type.class.php');
 									.  $DSP->table_qcell('itemTitle', 'Entry Date', '20%')
 									.  $DSP->table_qcell('', '[entry_date] date', '15%')
 									.  $DSP->table_qcell('', $DSP->input_select_header('field_column_select[2]').$field_column_select_populate.$DSP->input_select_footer(), '10%')
-									.  $DSP->table_qcell('', '--', '10%') // no delimeter input
-									.  $DSP->table_qcell('', '--') // no unique checkbox
+									.  $DSP->table_qcell('', '&nbsp;&nbsp;--', '10%') // no delimeter input
+									.  $DSP->table_qcell('', '&nbsp;&nbsp;--', '10%') // no unique checkbox
+									.  $DSP->table_qcell('', '&nbsp;&nbsp;--') // no addition support
 									.  $DSP->tr_c();
 			// author field
 			$form_table .= $DSP->tr()
@@ -157,8 +161,9 @@ require_once('classes/field_type.class.php');
 									.  $DSP->table_qcell('itemTitle', 'Author', '20%')
 									.  $DSP->table_qcell('', '[author] text', '15%')
 									.  $DSP->table_qcell('', $DSP->input_select_header('field_column_select[3]').$field_column_select_populate.$DSP->input_select_footer(), '10%')
-									.  $DSP->table_qcell('', '--', '10%') // no delimeter input
-									.  $DSP->table_qcell('', '--') // no unique checkbox
+									.  $DSP->table_qcell('', '&nbsp;&nbsp;--', '10%') // no delimeter input
+									.  $DSP->table_qcell('', '&nbsp;&nbsp;--', '10%') // no unique checkbox
+									.  $DSP->table_qcell('', '&nbsp;&nbsp;--') // no addition support
 									.  $DSP->tr_c();
 			// status field
 			$form_table .= $DSP->tr()
@@ -166,12 +171,13 @@ require_once('classes/field_type.class.php');
 									.  $DSP->table_qcell('itemTitle', 'Status', '20%')
 									.  $DSP->table_qcell('', '[status] text', '15%')
 									.  $DSP->table_qcell('', $DSP->input_select_header('field_column_select[4]').$field_column_select_populate.$DSP->input_select_footer(), '10%')
-									.  $DSP->table_qcell('', '--', '10%') // no delimeter input
-									.  $DSP->table_qcell('', '--') // no unique checkbox
+									.  $DSP->table_qcell('', '&nbsp;&nbsp;--', '10%') // no delimeter input
+									.  $DSP->table_qcell('', '&nbsp;&nbsp;--', '10%') // no unique checkbox
+									.  $DSP->table_qcell('', '&nbsp;&nbsp;--') // no addition support
 									.  $DSP->tr_c();
 
 			$form_table .= $DSP->tr()
-							.  $DSP->table_qcell('itemTitle\' colspan=\'6', '<hr />')
+							.  $DSP->table_qcell('itemTitle\' colspan=\'7', '<hr />')
 							.  $DSP->tr_c();
 
 			$i = 5;
@@ -185,6 +191,7 @@ require_once('classes/field_type.class.php');
 				$field_text .= ($row['field_is_gypsy'] == 'y' ? ' (gypsy)' : '');
 				$field_required = ($row['field_required'] == 'y' ? '&nbsp;&nbsp;*' : '');
 				$unique_checkbox = $DSP->input_checkbox('unique[]\' id=\'unique_'.$index, $index+1);
+				$addition_checkbox = $DSP->input_checkbox('addition['.($index+1).']\' id=\'addition_'.$index, $index+1);
 				$form_table .= $DSP->tr()
 										.  $DSP->table_qcell('', $field_required, '1%')
 										.  $DSP->table_qcell('itemTitle', $field_title, '20%')
@@ -198,13 +205,19 @@ require_once('classes/field_type.class.php');
 										if (in_array($row['field_type'], $delimiter_field_types)) {
 											$form_table .= $DSP->table_qcell('', '<label for="delimiter_category">'.$LANG->line('import_data_delimiter_field').'</label> '.$DSP->input_text('delimiter['.$index.']', '', '5', '10', 'input', '35px', 'id=\'delimiter_category\''), '10%'); // delimeter input
 										} else {
-											$form_table .= $DSP->table_qcell('', '--', '10%'); // no delimeter input
+											$form_table .= $DSP->table_qcell('', '&nbsp;&nbsp;--', '10%'); // no delimeter input
 										}
 
 										if (in_array($row['field_type'], $unique_field_types)) {
-											$form_table .= $DSP->table_qcell('', $unique_checkbox.' <label for="unique_'.$index.'">'.$LANG->line('import_data_unique_field').'</label>'); // unique checkbox
+											$form_table .= $DSP->table_qcell('', $unique_checkbox.' <label for="unique_'.$index.'">'.$LANG->line('import_data_unique_field').'</label>', '10%'); // unique checkbox
 										} else {
-											$form_table .= $DSP->table_qcell('', '--'); // no unique checkbox
+											$form_table .= $DSP->table_qcell('', '&nbsp;&nbsp;--', '10%'); // no unique checkbox
+										}
+
+										if (in_array($row['field_type'], $addition_field_types)) {
+											$form_table .= $DSP->table_qcell('', $addition_checkbox.' <label for="addition_'.$index.'">'.$LANG->line('import_data_addition_field').'</label>'); // addition support
+										} else {
+											$form_table .= $DSP->table_qcell('', '&nbsp;&nbsp;--'); // no addition support
 										}
 				$form_table .= $DSP->tr_c();
 				$i++;
