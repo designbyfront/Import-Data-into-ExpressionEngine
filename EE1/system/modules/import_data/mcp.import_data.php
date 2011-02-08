@@ -12,8 +12,9 @@
  * Dependencies:
  *
  *  #Input Types
- *  - Input_type.interface.php [modules/import_data/files/input_types/Input_type.interface.php]
- *  - Csv_file.class.php       [modules/import_data/files/input_types/Csv_file.class.php]
+ *  - Input_type.interface.php  [modules/import_data/files/input_types/Input_type.interface.php]
+ *  - Csv_file.class.php        [modules/import_data/files/input_types/Csv_file.class.php]
+ *  - Remote_csv_file.class.php [modules/import_data/files/input_types/Remote_csv_file.class.php]
  *  ~~Add your Input Type here~~
  *
  *  #Stage Files
@@ -37,6 +38,7 @@ require_once 'files/input_types/Input_type.interface.php';
 // Defined input types:
 // Can't use the autoload function as it is used by EE
 require_once 'files/input_types/Csv_file.class.php';
+require_once 'files/input_types/Remote_csv_file.class.php';
 //require_once 'files/input_types/Xml_test_file.class.php';
 // ~~Add your Input Type here~~
 
@@ -51,6 +53,7 @@ class Import_data_CP
 	// Available input types
 	var $input_types = array(
 	                      'CSV' => 'CSV',
+	                      'remote_CSV' => 'Remote CSV',
 	                      //'XML' => 'XML',
 	                      '' => ''
 	                    );
@@ -87,8 +90,8 @@ class Import_data_CP
 			case 'CSV' :
 				return array(TRUE, new Csv_file($input_data_location));
 
-			//case 'XML Test' :
-			//	return new array(TRUE, Xml_test_file($input_data_location));
+			case 'remote_CSV' :
+				return array(TRUE, new Remote_csv_file($input_data_location));
 
 			case 'XML' :
 				return  array(FALSE, $input_data_type.$LANG->line('import_data_unimplemented_input_type'));
