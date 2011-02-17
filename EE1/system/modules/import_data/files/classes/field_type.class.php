@@ -8,7 +8,7 @@
  *
  * @package DesignByFront
  * @author  Alistair Brown
- * @link    http://github.com/designbyfront/Import-Data into-ExpressionEngine
+ * @link    http://github.com/designbyfront/Import-Data-into-ExpressionEngine
  * @since   Version 0.1
  *
  */

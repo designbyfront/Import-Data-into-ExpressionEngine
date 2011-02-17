@@ -36,13 +36,14 @@ require_once('classes/field_type.class.php');
 		global $LANG, $DSP, $DB, $log_notifications, $notifications, $notifications_count;
 		$added_entry_ids = array(); // Array of entries which have already been added
 
-		// Hard coded EE fields (title, category, entry_date, author, status)
-		$num_ee_special_fields = 5;
+		// Hard coded EE fields (title, title_url, category, entry_date, author, status)
+		$num_ee_special_fields = 6;
 		$title_index      = 0;
-		$category_index   = 1;
-		$entry_date_index = 2;
-		$author_id_index  = 3;
-		$status_index     = 4;
+		$url_title_index  = 1;
+		$category_index   = 2;
+		$entry_date_index = 3;
+		$author_id_index  = 4;
+		$status_index     = 5;
 
 		// Select the correct input_type object depending on type selected
 		$input_file_obj_return = Import_data_CP::get_input_type_obj($input_data_type, $input_data_location);
@@ -150,13 +151,13 @@ require_once('classes/field_type.class.php');
 			$post_data["site_id"] = $site_id;
 			$post_data["weblog_id"] = $weblog_id;
 			$post_data["title"] = (isset($input_row[$field_column_mapping[$title_index]]) ? $input_row[$field_column_mapping[$title_index]] : '');
+			$post_data["url_title"] = (isset($input_row[$field_column_mapping[$url_title_index]]) ? $input_row[$field_column_mapping[$url_title_index]] : '');
 			$post_data["category"] = array(); // Calculated later
 			$post_data["entry_date"] = (empty($input_row[$field_column_mapping[$entry_date_index]]) ? date("Y-m-d H:i A") : date("Y-m-d H:i A", (is_numeric($input_row[$field_column_mapping[$entry_date_index]]) ? $input_row[$field_column_mapping[$entry_date_index]] : strtotime($input_row[$field_column_mapping[$entry_date_index]].' '.date('T')))));
 			$post_data["author_id"] = ''; // Calcaulted later
 			$post_data["status"] = 'open'; // Calculated later
 
-			//$post_data["entry_id"] = '';
-			$post_data["url_title"] = '';
+			// Other EE fields
 			$post_data["allow_comments"] = 'y';
 			$post_data["structure_parent"] = '';
 			//$post_data["structure_uri"] = '';
@@ -488,7 +489,13 @@ require_once('classes/field_type.class.php');
 		}
 	}
 
-	$current_post = $_POST;
+	if (isset($_POST['settings_file'])) {
+		$current_post = json_decode(file_get_contents($_POST['settings_file']), TRUE);
+		$current_post['input_file'] = $_POST['input_file'];
+	} else {
+		$current_post = $_POST;
+	}
+
 	$site_data = explode('#', $current_post['site_select']);
 	$site_data_hidden = $DSP->input_hidden('site_select', $current_post['site_select']);
 	$site_id = $site_data[0];
@@ -527,6 +534,24 @@ require_once('classes/field_type.class.php');
 
 	//$r .= '<pre>'.print_r($current_post, true).'</pre>';
 	$r .= insert_data($site_id, $weblog_id, $input_type, $input_data_location, $delimiter_columns, $unique_columns, $addition_columns, $field_column_mapping, $column_field_replationship);
+
+	if (!isset($_POST['settings_file'])) {
+		$r .= $DSP->form_open(
+							array(
+									'action'		=> 'C=modules'.AMP.'M=import_data'.AMP.'P=export_settings', 
+									'method'		=> 'post',
+									'name'		=> 'entryform',
+									'id'			=> 'entryform',
+									'enctype'	=> 'multipart/form-data'
+								 ),
+							array(
+								)
+						 );
+		$r .= $DSP->input_hidden('referal', 'stage_four');
+		$r .= $DSP->input_hidden('data', json_encode($current_post));
+		$r .= $DSP->input_submit($LANG->line('import_data_form_export_settings'));
+		$r .= $DSP->form_close();
+	}
 
 	$DSP->body .= $r;
 

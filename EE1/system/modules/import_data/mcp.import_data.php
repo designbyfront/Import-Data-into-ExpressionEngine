@@ -48,7 +48,7 @@ ini_set('auto_detect_line_endings', true);
 class Import_data_CP
 {
 
-	var $version = '1.4';
+	var $version = '1.5';
 
 	// Available input types
 	var $input_types = array(
@@ -69,6 +69,8 @@ class Import_data_CP
 		{
 			switch($IN->GBL('P'))
 			{
+				case 'export_settings'  : $this->export_settings();
+					break;
 				case 'stage_four'  : $this->stage_four();
 					break;
 				case 'stage_three' : $this->stage_three();
@@ -123,6 +125,21 @@ class Import_data_CP
 	function stage_one()
 	{
 		require_once('files/stage_one.php');
+	}
+
+	function export_settings()
+	{
+		//ob_start();
+		header ('Content-Type: application/octet-stream');
+		header ('Content-Disposition: attachment; filename=settings-'.time().'.json');
+		if (isset($_POST['referal']) && $_POST['referal'] == 'stage_four') {
+			$settings = json_decode(stripslashes($_POST['data']), TRUE);
+		} else {
+			$settings = $_POST;
+		}
+		unset($settings['input_file']);
+		echo json_encode($settings);
+		exit();
 	}
 
 

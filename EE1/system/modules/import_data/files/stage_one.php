@@ -4,10 +4,6 @@
  *
  * ### EE 1.6 version ###
  *
- *
- * To do:
- *  - Select previously uploaded file
- *
 */
 
 	global $DSP, $LANG, $DB, $FNS, $SESS;
@@ -116,6 +112,14 @@ $r = '<script type="text/javascript">
 
 	// Set up the selects with all data and in the correct syntax for jQuery to modify
 
+	$file_select = $DSP->input_select_header('file_select');
+	$file_select .= $DSP->input_select_option('', 'Coming Soon...');
+	$file_select .= $DSP->input_select_footer();
+
+	$settings_select = $DSP->input_select_header('settings_select');
+	$settings_select .= $DSP->input_select_option('', 'Coming Soon...');
+	$settings_select .= $DSP->input_select_footer();
+
 	$query = $DB->query("SELECT site_id,site_label,site_name
 											 FROM exp_sites");
 	$site_select = $DSP->input_select_header('site_select');
@@ -142,39 +146,60 @@ $r = '<script type="text/javascript">
 	//  Table and Table Headers
 	// -------------------------------------------------------
 
-	$r .= $DSP->table('', '10', '', '100%')
+
+	$r .= $DSP->table('', '10', '', '600px')
 		 .  $DSP->tr()
 		 .  $DSP->table_qcell('tableHeading', array())
 		 .  $DSP->tr_c();
 
 	$r .= $DSP->tr()
-		 .  $DSP->table_qcell('itemTitle', $LANG->line('import_data_site_select'), '10%')
-		 .  $DSP->table_qcell('', $site_select)
+		 .  $DSP->table_qcell('\' colspan=\'4', '<h4 style="margin: 0; font-size: 1.2em;">'.$LANG->line('import_data_input_file').'</h4>')
 		 .  $DSP->tr_c();
 
 	$r .= $DSP->tr()
-		 .  $DSP->table_qcell('itemTitle', $LANG->line('import_data_section_select'))
-		 .  $DSP->table_qcell('', $weblog_select)
+		 .  $DSP->table_qcell('', '')
+		 .  $DSP->table_qcell('\' style=\'width: 250px;', '<input type="file" name="input_file" />')
+		 .  $DSP->table_qcell('', '<div style="text-align: center; width: 50px;">&nbsp;</div>')//- OR -
+		 .  $DSP->table_qcell('\' style=\'padding-left: 30px;', '')//$file_select
 		 .  $DSP->tr_c();
 
 	$r .= $DSP->tr()
-		 .  $DSP->table_qcell('itemTitle', $LANG->line('import_data_input_file'))
-		 .  $DSP->table_qcell('', '<input type="file" name="input_file" />')
+		 .  $DSP->table_qcell('', '')
+		 .  $DSP->table_qcell('\' colspan=\'3', '<hr />')
+		 .  $DSP->tr_c();
+
+	$r .= $DSP->tr()
+		 .  $DSP->table_qcell('\' colspan=\'4', '<h4 style="margin: 0; font-size: 1.2em;">Settings</h4>')
 		 .  $DSP->tr_c();
 
 	$r .= $DSP->tr()
 		 .  $DSP->table_qcell('', '')
 		 .  $DSP->table_qcell('',  $DSP->input_checkbox('relationships\' id=\'relationships', 'y', 0).' <label for="relationships">'.$LANG->line('import_data_relationship_check').'</label>')
+		 .  $DSP->table_qcell('\' rowspan=\'4\' valign=\'center\' style=\'text-align: center;', '<div style="height: 60px; width: 1px; border-left: 1px solid #000; margin: 0 auto;"></div><div style="text-align: center; padding: 5px 0;">- OR -</div><div style="height: 60px; width: 1px; border-left: 1px solid #000; margin: 0 auto;"></div>')
+		 .  $DSP->table_qcell('\' rowspan=\'2', '<input type="file" name="settings_file" />')
 		 .  $DSP->tr_c();
+
+
+	$r .= $DSP->tr()
+		 .  $DSP->table_qcell('itemTitle', $LANG->line('import_data_site_select'), '10%')
+		 .  $DSP->table_qcell('', $site_select)
+		 //.  $DSP->table_qcell('', '')
+		 //.  $DSP->table_qcell('', '')
+		 .  $DSP->tr_c();
+
+	$r .= $DSP->tr()
+		 .  $DSP->table_qcell('itemTitle', $LANG->line('import_data_section_select'))
+		 .  $DSP->table_qcell('', $weblog_select)
+		 //.  $DSP->table_qcell('', '')
+		 .  $DSP->table_qcell('', '')//<div style="width: 75px; height: 1px; border-top: 1px solid #000; float: left; position: relative; top: 8px"></div><div style="text-align: center; padding: 0 5px; float: left;">- OR -</div><div style="width: 75px; height: 1px; border-top: 1px solid #000; float: left; position: relative; top: 8px"></div>
+		 .  $DSP->tr_c();
+
 
 	$r .= $DSP->tr()
 		 .  $DSP->table_qcell('itemTitle', $LANG->line('import_data_type_select'))
 		 .  $DSP->table_qcell('', $type_select)
-		 .  $DSP->tr_c();
-
-	$r .= $DSP->tr()
-		 .  $DSP->table_qcell('', '')
-		 .  $DSP->table_qcell('', '<b>'.$LANG->line('import_data_notes_title').':</b> '.$LANG->line('import_data_notes_data'))
+		 //.  $DSP->table_qcell('', '')
+		 .  $DSP->table_qcell('\' style=\'padding-left: 0.5em;', '')//$settings_select
 		 .  $DSP->tr_c();
 
 	// ------------------------------------------------------- 

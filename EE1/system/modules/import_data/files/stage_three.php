@@ -135,12 +135,22 @@ require_once('classes/field_type.class.php');
 									.  $DSP->table_qcell('', $DSP->input_checkbox('unique[]\' id=\'unique_title', 0).' <label for="unique_title">'.$LANG->line('import_data_unique_field').'</label>', '10%') // unique checkbox
 									.  $DSP->table_qcell('', '&nbsp;&nbsp;--') // no addition support
 									.  $DSP->tr_c();
+			// title url field
+			$form_table .= $DSP->tr()
+									.  $DSP->table_qcell('', '', '1%')
+									.  $DSP->table_qcell('itemTitle', 'Title URL', '20%')
+									.  $DSP->table_qcell('', '[url_title] text', '15%')
+									.  $DSP->table_qcell('', $DSP->input_select_header('field_column_select[1]').$field_column_select_populate.$DSP->input_select_footer(), '10%')
+									.  $DSP->table_qcell('', '&nbsp;&nbsp;--', '10%') // no delimeter input
+									.  $DSP->table_qcell('', '&nbsp;&nbsp;--', '10%') // no unique checkbox
+									.  $DSP->table_qcell('', '&nbsp;&nbsp;--') // no addition support
+									.  $DSP->tr_c();
 			// category field
 			$form_table .= $DSP->tr()
 									.  $DSP->table_qcell('', '', '1%')
 									.  $DSP->table_qcell('itemTitle', 'Category', '20%')
 									.  $DSP->table_qcell('', '[category] text', '15%')
-									.  $DSP->table_qcell('', $DSP->input_select_header('field_column_select[1][]', 'y', '4', '85%').$field_column_select_populate.$DSP->input_select_footer(), '10%')
+									.  $DSP->table_qcell('', $DSP->input_select_header('field_column_select[2][]', 'y', '4', '85%').$field_column_select_populate.$DSP->input_select_footer(), '10%')
 									.  $DSP->table_qcell('', '<label for="delimiter_category">'.$LANG->line('import_data_delimiter_field').'</label> '.$DSP->input_text('delimiter[0]', '', '5', '10', 'input', '35px', 'id=\'delimiter_category\''), '10%') // delimeter input
 									.  $DSP->table_qcell('', '&nbsp;&nbsp;--', '10%') // no unique checkbox
 									.  $DSP->table_qcell('', $DSP->input_checkbox('addition[0]\' id=\'addition_category', 0).' <label for="addition_category">'.$LANG->line('import_data_addition_field').'</label>') // addition support
@@ -150,7 +160,7 @@ require_once('classes/field_type.class.php');
 									.  $DSP->table_qcell('', '', '1%')
 									.  $DSP->table_qcell('itemTitle', 'Entry Date', '20%')
 									.  $DSP->table_qcell('', '[entry_date] date', '15%')
-									.  $DSP->table_qcell('', $DSP->input_select_header('field_column_select[2]').$field_column_select_populate.$DSP->input_select_footer(), '10%')
+									.  $DSP->table_qcell('', $DSP->input_select_header('field_column_select[3]').$field_column_select_populate.$DSP->input_select_footer(), '10%')
 									.  $DSP->table_qcell('', '&nbsp;&nbsp;--', '10%') // no delimeter input
 									.  $DSP->table_qcell('', '&nbsp;&nbsp;--', '10%') // no unique checkbox
 									.  $DSP->table_qcell('', '&nbsp;&nbsp;--') // no addition support
@@ -160,7 +170,7 @@ require_once('classes/field_type.class.php');
 									.  $DSP->table_qcell('', '', '1%')
 									.  $DSP->table_qcell('itemTitle', 'Author', '20%')
 									.  $DSP->table_qcell('', '[author] text', '15%')
-									.  $DSP->table_qcell('', $DSP->input_select_header('field_column_select[3]').$field_column_select_populate.$DSP->input_select_footer(), '10%')
+									.  $DSP->table_qcell('', $DSP->input_select_header('field_column_select[4]').$field_column_select_populate.$DSP->input_select_footer(), '10%')
 									.  $DSP->table_qcell('', '&nbsp;&nbsp;--', '10%') // no delimeter input
 									.  $DSP->table_qcell('', '&nbsp;&nbsp;--', '10%') // no unique checkbox
 									.  $DSP->table_qcell('', '&nbsp;&nbsp;--') // no addition support
@@ -170,7 +180,7 @@ require_once('classes/field_type.class.php');
 									.  $DSP->table_qcell('', '', '1%')
 									.  $DSP->table_qcell('itemTitle', 'Status', '20%')
 									.  $DSP->table_qcell('', '[status] text', '15%')
-									.  $DSP->table_qcell('', $DSP->input_select_header('field_column_select[4]').$field_column_select_populate.$DSP->input_select_footer(), '10%')
+									.  $DSP->table_qcell('', $DSP->input_select_header('field_column_select[5]').$field_column_select_populate.$DSP->input_select_footer(), '10%')
 									.  $DSP->table_qcell('', '&nbsp;&nbsp;--', '10%') // no delimeter input
 									.  $DSP->table_qcell('', '&nbsp;&nbsp;--', '10%') // no unique checkbox
 									.  $DSP->table_qcell('', '&nbsp;&nbsp;--') // no addition support
@@ -180,7 +190,8 @@ require_once('classes/field_type.class.php');
 							.  $DSP->table_qcell('itemTitle\' colspan=\'7', '<hr />')
 							.  $DSP->tr_c();
 
-			$i = 5;
+			// Number of EE fields
+			$i = 6;
 			foreach($weblog_fields as $index => $row) {
 				$field_title = $row['field_label'];
 				// Translate ftype_id_X into field type name
@@ -256,7 +267,7 @@ require_once('classes/field_type.class.php');
 														 $LANG->line('import_data_module_name'));
 	$DSP->crumb .= $DSP->crumb_item($LANG->line('import_data_stage3'));
 
-	$form_submit = $DSP->input_submit($LANG->line('import_data_form_publish'));
+	$form_submit = '<div id="submit_buttons">'.$DSP->input_submit($LANG->line('import_data_form_publish')).'</div>';
 
 	// -------------------------------------------------------
 	//  Page Heading
@@ -267,6 +278,9 @@ require_once('classes/field_type.class.php');
 		$("#field_list td").css({"padding-bottom": "5px", "padding-top": "5px"});
 		$("#field_list tr td:first").css({"padding-left": "10px", "padding-right": "10px", "font-weight": "bold"});
 		$("#field_list tr:even").css("background-color", "#EDEDED");
+		
+		$("#submit_buttons").append("<input type=\"submit\" value=\"'.$LANG->line('import_data_form_export_settings').'\" id=\"export_settings\" />");
+		$("#export_settings").click(function() { $("#entryform").attr({action: "'.BASE.'&C=modules&M=import_data&P=export_settings"}); $("#entryform").submit(); setTimeout(function() { $("#entryform").attr({action: "'.BASE.'&C=modules&M=import_data&P=stage_four"}); }, 200); });
 	});
 </script>';
 

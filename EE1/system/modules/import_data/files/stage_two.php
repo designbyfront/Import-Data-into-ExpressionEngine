@@ -38,7 +38,7 @@
 
 
 	// Deal with file input
-	$upload_success = false;
+	$input_upload_success = false;
 	$target_file = '';
 	if ($_FILES['input_file']['name'] != '') {
 		// Upload directory will be - {system}/modules/import_data/files/upload_input_files/
@@ -49,26 +49,48 @@
 			chmod($upload_location, 0777);
 		}
 		$target_file = $upload_location.time().'-'.basename($_FILES['input_file']['name']);
-		$upload_success = move_uploaded_file($_FILES['input_file']['tmp_name'], $target_file);
+		$input_upload_success = move_uploaded_file($_FILES['input_file']['tmp_name'], $target_file);
 		chmod($target_file, 0766);
 	}
-
-	$site_data = explode('#', $_POST['site_select']);
-	$site_data_hidden = $DSP->input_hidden('site_select', $_POST['site_select']);
-	$site_id = $site_data[0];
-	$site_name = $site_data[1];
-
-	$weblog_data = explode('#', $_POST['weblog_select']);
-	$weblog_data_hidden = $DSP->input_hidden('weblog_select', $_POST['weblog_select']);
-	$weblog_id = $weblog_data[0];
-	$weblog_name = $weblog_data[1];
-
-	$has_replationship = isset($_POST['relationships']) && $_POST['relationships'] == 'y';
-
-	$input_type = $_POST['type_select'];
-	$input_type_hidden = $DSP->input_hidden('type_select', $input_type);
 	$input_data_location = $target_file;
+
+	$settings_upload_success = false;
+	$target_file = '';
+	if ($_FILES['settings_file']['name'] != '') {
+		// Upload directory will be - {system}/modules/import_data/files/upload_settings_files/
+		// This directory should have chmod 777 (PHP may not have authority to chmod)
+		$upload_location = substr(__FILE__, 0, strrpos(__FILE__, '/')).'/upload_settings_files/';
+		if (!file_exists($upload_location)) {
+			mkdir($upload_location);
+			chmod($upload_location, 0777);
+		}
+		$target_file = $upload_location.time().'-'.basename($_FILES['settings_file']['name']);
+		$settings_upload_success = move_uploaded_file($_FILES['settings_file']['tmp_name'], $target_file);
+		chmod($target_file, 0766);
+	}
+	$settings_data_location = $target_file;
+
+
+	if (!$settings_upload_success) {
+		$site_data = explode('#', $_POST['site_select']);
+		$site_data_hidden = $DSP->input_hidden('site_select', $_POST['site_select']);
+		$site_id = $site_data[0];
+		$site_name = $site_data[1];
+
+		$weblog_data = explode('#', $_POST['weblog_select']);
+		$weblog_data_hidden = $DSP->input_hidden('weblog_select', $_POST['weblog_select']);
+		$weblog_id = $weblog_data[0];
+		$weblog_name = $weblog_data[1];
+
+		$has_replationship = isset($_POST['relationships']) && $_POST['relationships'] == 'y';
+
+		$input_type = $_POST['type_select'];
+		$input_type_hidden = $DSP->input_hidden('type_select', $input_type);
+	} else {
+		$settings_data_location = $DSP->input_hidden('settings_file', $settings_data_location);
+	}
 	$input_data_hidden = $DSP->input_hidden('input_file', $input_data_location);
+
 
 	// -------------------------------------------------------
 	//  HTML Title and Navigation Crumblinks
@@ -154,116 +176,138 @@ $r = '<script type="text/javascript">
 	// -------------------------------------------------------
 	$r .= $DSP->heading($LANG->line('import_data_stage2_heading'));
 
-	$input_header_select = generate_input_headings($input_type, $input_data_location);
+	if (!$settings_upload_success) {
+		$input_header_select = generate_input_headings($input_type, $input_data_location);
 
-	$query = $DB->query('SELECT weblog_id,blog_name,blog_title
-											 FROM exp_weblogs
-											 WHERE site_id = \''.$DB->escape_str($site_id).'\'');
-	$relation_weblog_select = $DSP->input_select_header('relation_weblog_select[]');
-	foreach($query->result as $row)
-		$relation_weblog_select .= $DSP->input_select_option($row['weblog_id'].'#'.$row['blog_title'].' ['.$row['blog_name'].', '.$row['weblog_id'].']', $row['blog_title'].' ['.$row['blog_name'].', '.$row['weblog_id'].']');
-	$relation_weblog_select .= $DSP->input_select_footer();
+		$query = $DB->query('SELECT weblog_id,blog_name,blog_title
+												 FROM exp_weblogs
+												 WHERE site_id = \''.$DB->escape_str($site_id).'\'');
+		$relation_weblog_select = $DSP->input_select_header('relation_weblog_select[]');
+		foreach($query->result as $row)
+			$relation_weblog_select .= $DSP->input_select_option($row['weblog_id'].'#'.$row['blog_title'].' ['.$row['blog_name'].', '.$row['weblog_id'].']', $row['blog_title'].' ['.$row['blog_name'].', '.$row['weblog_id'].']');
+		$relation_weblog_select .= $DSP->input_select_footer();
 
-	// check if Gypsy is installed and set boolean
-	$query = $DB->query('SELECT class
-											 FROM exp_extensions 
-											 WHERE class = \'Gypsy\'
-											');
-	$gypsy_installed = $query->num_rows > 0;
-
-	// Select normal fields
-	$query = $DB->query('SELECT wb.weblog_id, wf.field_id, wf.field_name, wf.field_label
-											 FROM exp_weblogs wb, exp_field_groups fg, exp_weblog_fields wf
-											 WHERE wb.site_id = \''.$DB->escape_str($site_id).'\'
-											 AND   wb.site_id = fg.site_id
-											 AND   wb.site_id = wf.site_id
-											 AND   wb.field_group = fg.group_id
-											 AND   wb.field_group = wf.group_id '.
-											 ($gypsy_installed ? 'AND   wf.field_is_gypsy = \'n\'' : '')
-											);
-	$relation_field_select = $DSP->input_select_header('relation_field_select[]');
-	$last_weblog_id = 0;
-	foreach($query->result as $row) {
-		if ($last_weblog_id != $row['weblog_id']) {
-			$last_weblog_id = $row['weblog_id'];
-			$relation_field_select .= $DSP->input_select_option('0#Title [title]', $LANG->line('import_data_section_select').' '.$row['weblog_id'].' - Title [title]');
-		}
-		$relation_field_select .= $DSP->input_select_option($row['field_id'].'#'.$row['field_label'].' ['.$row['field_name'].']', $LANG->line('import_data_section_select').' '.$row['weblog_id'].' - '.$row['field_label'].' ['.$row['field_name'].']');
-	}
-
-	if ($gypsy_installed) {
-		// Select gypsy fields
-		$query = $DB->query('SELECT wf.gypsy_weblogs, wf.field_id, wf.field_name, wf.field_label
-												 FROM exp_weblog_fields wf
-												 WHERE wf.site_id = \''.$DB->escape_str($site_id).'\'
-												 AND   wf.field_is_gypsy = \'y\'
+		// check if Gypsy is installed and set boolean
+		$query = $DB->query('SELECT class
+												 FROM exp_extensions 
+												 WHERE class = \'Gypsy\'
 												');
+		$gypsy_installed = $query->num_rows > 0;
+
+		// Select normal fields
+		$query = $DB->query('SELECT wb.weblog_id, wf.field_id, wf.field_name, wf.field_label
+												 FROM exp_weblogs wb, exp_field_groups fg, exp_weblog_fields wf
+												 WHERE wb.site_id = \''.$DB->escape_str($site_id).'\'
+												 AND   wb.site_id = fg.site_id
+												 AND   wb.site_id = wf.site_id
+												 AND   wb.field_group = fg.group_id
+												 AND   wb.field_group = wf.group_id '.
+												 ($gypsy_installed ? 'AND   wf.field_is_gypsy = \'n\'' : '')
+												);
+		$relation_field_select = $DSP->input_select_header('relation_field_select[]');
+		$last_weblog_id = 0;
 		foreach($query->result as $row) {
-			$used_by = explode(' ', trim($row['gypsy_weblogs']));
-			foreach ($used_by as $weblog_id)
-				$relation_field_select .= $DSP->input_select_option($row['field_id'].'#'.$row['field_label'].' ['.$row['field_name'].'] (gypsy)', $LANG->line('import_data_section_select').' '.$weblog_id.' - '.$row['field_label'].' ['.$row['field_name'].'] (gypsy)');
+			if ($last_weblog_id != $row['weblog_id']) {
+				$last_weblog_id = $row['weblog_id'];
+				$relation_field_select .= $DSP->input_select_option('0#Title [title]', $LANG->line('import_data_section_select').' '.$row['weblog_id'].' - Title [title]');
+			}
+			$relation_field_select .= $DSP->input_select_option($row['field_id'].'#'.$row['field_label'].' ['.$row['field_name'].']', $LANG->line('import_data_section_select').' '.$row['weblog_id'].' - '.$row['field_label'].' ['.$row['field_name'].']');
 		}
+
+		if ($gypsy_installed) {
+			// Select gypsy fields
+			$query = $DB->query('SELECT wf.gypsy_weblogs, wf.field_id, wf.field_name, wf.field_label
+													 FROM exp_weblog_fields wf
+													 WHERE wf.site_id = \''.$DB->escape_str($site_id).'\'
+													 AND   wf.field_is_gypsy = \'y\'
+													');
+			foreach($query->result as $row) {
+				$used_by = explode(' ', trim($row['gypsy_weblogs']));
+				foreach ($used_by as $weblog_id)
+					$relation_field_select .= $DSP->input_select_option($row['field_id'].'#'.$row['field_label'].' ['.$row['field_name'].'] (gypsy)', $LANG->line('import_data_section_select').' '.$weblog_id.' - '.$row['field_label'].' ['.$row['field_name'].'] (gypsy)');
+			}
+		}
+
+		$relation_field_select .= $DSP->input_select_footer();
 	}
 
-	$relation_field_select .= $DSP->input_select_footer();
-
-
-	$form_submit = $DSP->input_submit($LANG->line('import_data_form_continue'));
-
-	if (!$upload_success) {
+	if (!$input_upload_success) {
 		return $DSP->error_message($LANG->line('import_data_stage2_input_error'), 1);
 	} else {
 		$r .= $DSP->qdiv('itemWrapper', $LANG->line('import_data_stage2_input_success'));
 
-		$r .= $DSP->form_open(
-							array(
-									'action'	=> 'C=modules'.AMP.'M=import_data'.AMP.'P=stage_three', 
-									'method'	=> 'post',
-									'name'		=> 'entryform',
-									'id'			=> 'entryform'
-								 ),
-							array(
-								)
-						 );
+		if (!$settings_upload_success) {
+			$form_submit = $DSP->input_submit($LANG->line('import_data_form_continue'));
 
-		require_once('previous_data_table.php');
+			$r .= $DSP->form_open(
+								array(
+										'action'	=> 'C=modules'.AMP.'M=import_data'.AMP.'P=stage_three', 
+										'method'	=> 'post',
+										'name'		=> 'entryform',
+										'id'			=> 'entryform'
+									 ),
+								array(
+									)
+							 );
 
-		if ($has_replationship) {
-			$r .= $DSP->qdiv('itemWrapper', $LANG->line('import_data_stage2_relationship_y'));
+			require_once('previous_data_table.php');
 
-			$r .= $DSP->table('\' id=\'relationship_table_0', '10', '', '100%');
+			if ($has_replationship) {
+				$r .= $DSP->qdiv('itemWrapper', $LANG->line('import_data_stage2_relationship_y'));
 
-			$r .= $DSP->tr()
-				 .  $DSP->table_qcell('', '<hr />')
-				 .  $DSP->table_qcell('relationship_num\' style=\'font-weight: bold;', 'Relationship #1') //default
-				 .  $DSP->tr_c();
+				$r .= $DSP->table('\' id=\'relationship_table_0', '10', '', '100%');
 
-			$r .= $DSP->tr()
-				 .  $DSP->table_qcell('itemTitle', $LANG->line('import_data_input_field_select'), '10%')
-				 .  $DSP->table_qcell('', $input_header_select)
-				 .  $DSP->tr_c();
+				$r .= $DSP->tr()
+					 .  $DSP->table_qcell('', '<hr />')
+					 .  $DSP->table_qcell('relationship_num\' style=\'font-weight: bold;', 'Relationship #1') //default
+					 .  $DSP->tr_c();
 
-			$r .= $DSP->tr()
-				 .  $DSP->table_qcell('style=""', '- '.$LANG->line('import_data_has_relationship').' -')
-				 .  $DSP->table_qcell('', '')
-				 .  $DSP->tr_c();
+				$r .= $DSP->tr()
+					 .  $DSP->table_qcell('itemTitle', $LANG->line('import_data_input_field_select'), '10%')
+					 .  $DSP->table_qcell('', $input_header_select)
+					 .  $DSP->tr_c();
 
-			$r .= $DSP->tr()
-				 .  $DSP->table_qcell('itemTitle', $LANG->line('import_data_section_select'))
-				 .  $DSP->table_qcell('', $relation_weblog_select)
-				 .  $DSP->tr_c();
+				$r .= $DSP->tr()
+					 .  $DSP->table_qcell('style=""', '- '.$LANG->line('import_data_has_relationship').' -')
+					 .  $DSP->table_qcell('', '')
+					 .  $DSP->tr_c();
 
-			$r .= $DSP->tr()
-				 .  $DSP->table_qcell('itemTitle', '&nbsp; -- '.$LANG->line('import_data_field_select'))
-				 .  $DSP->table_qcell('', $relation_field_select)
-				 .  $DSP->tr_c();
+				$r .= $DSP->tr()
+					 .  $DSP->table_qcell('itemTitle', $LANG->line('import_data_section_select'))
+					 .  $DSP->table_qcell('', $relation_weblog_select)
+					 .  $DSP->tr_c();
 
-			$r .= $DSP->table_c();
+				$r .= $DSP->tr()
+					 .  $DSP->table_qcell('itemTitle', '&nbsp; -- '.$LANG->line('import_data_field_select'))
+					 .  $DSP->table_qcell('', $relation_field_select)
+					 .  $DSP->tr_c();
 
-			$r .= $DSP->qdiv('\' id=\'add_relationship\' style=\'padding-left: 8%; padding-top: 2em; ', $LANG->line('import_data_stage2_add_relationship_link'));
+				$r .= $DSP->table_c();
+
+				$r .= $DSP->qdiv('\' id=\'add_relationship\' style=\'padding-left: 8%; padding-top: 2em; ', $LANG->line('import_data_stage2_add_relationship_link'));
+
+			} else {
+				$r .= $DSP->qdiv('itemWrapper', $LANG->line('import_data_stage2_relationship_n'));
+			}
 
 		} else {
-			$r .= $DSP->qdiv('itemWrapper', $LANG->line('import_data_stage2_relationship_n'));
+			$form_submit = $DSP->input_submit($LANG->line('import_data_form_publish'));
+			$r .= $DSP->qdiv('itemWrapper', $LANG->line('import_data_stage2_settings_success'));
+			$r .= $DSP->qdiv('itemWrapper', '<strong>'.$LANG->line('import_data_stage2_publish_message').'</strong>');
+
+			$r .= $DSP->form_open(
+								array(
+										'action'	=> 'C=modules'.AMP.'M=import_data'.AMP.'P=stage_four', 
+										'method'	=> 'post',
+										'name'		=> 'entryform',
+										'id'			=> 'entryform'
+									 ),
+								array(
+									)
+							 );
+
+		$r .= $settings_data_location.$input_data_hidden;
+
 		}
 
 		$r .= $form_submit;
