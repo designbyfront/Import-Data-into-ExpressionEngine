@@ -102,11 +102,23 @@ $L = array(
 
 	// ---------------------------------------------
 	// FIELD TYPE NOTIFICATION MESSAGES
-	'import_data_stage4_notification_equals_quote' => ' = \'',
+	'import_data_stage4_notification_equals_quote'              => ' = \'',
+	'import_data_stage4_notification_quote'                     => '\'',
+	'import_data_stage4_notification_quote_left_square_bracket' => '\' [',
 
 	// [post_data_rel]
 	'import_data_stage4_notification_rel_1' => 'A relationship with an existing entry [',
 	'import_data_stage4_notification_rel_2' => '\'] has not been created as the entry cannot be found',
+
+	// [post_data_ngen_file_field]
+	'import_data_stage4_notification_ngen_file_field_upload_location_1' => 'Upload location could not be determined from ExpressionEngine settings. Please make sure that upload locations where id',
+	'import_data_stage4_notification_ngen_file_field_upload_location_2' => '\' exists',
+	'import_data_stage4_notification_ngen_file_field_file_missing'      => 'File location does not exist for file \'',
+	'import_data_stage4_notification_ngen_file_field_file_moved'        => 'The import has moved files to \'',
+	'import_data_stage4_notification_ngen_file_field_file_not_moved'    => 'The import was unable to move \'',
+	'import_data_stage4_notification_ngen_file_field_file_to'           => '\' to \'',
+	'import_data_stage4_notification_ngen_file_field_file_specified_by' => '] as specified by the \'',
+	'import_data_stage4_notification_ngen_file_field_file_field'        => '\' field',
 
 	// [post_data_playa]
 	'import_data_stage4_notification_playa_defined_1' => '<b>Playa</b> is unable to create a relationship for field \'',

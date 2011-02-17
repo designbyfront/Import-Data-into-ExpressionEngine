@@ -34,7 +34,7 @@ class Field_type {
 		'select'          => 'post_data_select',
 		'date'            => 'post_data_date',
 		'rel'             => 'post_data_rel',
-		'ngen_file_field' => '', //Not implemented
+		'ngen_file_field' => 'post_data_ngen_file_field',
 		'playa'           => 'post_data_playa',
 		'ff_checkbox'     => 'post_data_ff_checkbox',
 		'wygwam'          => 'post_data_wygwam',
@@ -188,21 +188,41 @@ class Field_type {
 
 
 	private function post_data_ngen_file_field() {
-		// TODO
+		global $DB, $LANG;
+		$notification = array();
+		$uploaded_file_name = '';
+		if ($this->value === NULL || $this->value === '' || !isset($this->field['ff_settings'])) {
+			if (isset($this->existing['field_id_'.$this->field['field_id']]))
+				$uploaded_file_name = $this->existing['field_id_'.$this->field['field_id']];
+		} else {
+			$upload_settings = unserialize($this->field['ff_settings']);
+			$query = 'SELECT name, server_path
+							FROM exp_upload_prefs
+							WHERE id = '.$DB->escape_str($upload_settings['options']).'
+							AND site_id = '.$DB->escape_str($this->site_id);
+			//echo "<br /><br />\n\n".$query;
 
-		/*
-		Post data looks like:
-
-			["field_id_67"]=>
-				array(2) {
-					["file_name"]=>
-					string(0) ""
-					["existing"]=>
-					string(0) ""
+			$query = $DB->query($query);
+			$upload_location = $query->result;
+			if (empty($upload_location)) {
+				$notification[] = $this->format_notification($LANG->line('import_data_stage4_notification_ngen_file_field_upload_location_1').$upload_settings['options'].$LANG->line('import_data_stage4_notification_ngen_file_field_upload_location_2'), TRUE);
+			} else if (!file_exists($this->value)) {
+				$notification[] = $this->format_notification($LANG->line('import_data_stage4_notification_ngen_file_field_file_missing').$this->value.$LANG->line('import_data_stage4_notification_quote'));
+			} else {
+				$uploaded_file_name = basename($this->value);
+				$upload_location = $upload_location[0];
+				$destination = $upload_location['server_path'].$uploaded_file_name;
+				$successful_move = rename($this->value, $destination);
+				if ($successful_move) {
+					$notification[] = $this->format_notification($LANG->line('import_data_stage4_notification_ngen_file_field_file_moved').$upload_location['name'].$LANG->line('import_data_stage4_notification_quote_left_square_bracket').$upload_location['server_path'].$LANG->line('import_data_stage4_notification_ngen_file_field_file_specified_by').$this->field['field_name'].$LANG->line('import_data_stage4_notification_ngen_file_field_file_field'), TRUE);
+				} else {
+					$notification[] = $this->format_notification($LANG->line('import_data_stage4_notification_ngen_file_field_file_not_moved').$uploaded_file_name.$LANG->line('import_data_stage4_notification_ngen_file_field_file_to').$upload_location['name'].$LANG->line('import_data_stage4_notification_quote_left_square_bracket').$upload_location['server_path'].$LANG->line('import_data_stage4_notification_ngen_file_field_file_specified_by').$this->field['field_name'].$LANG->line('import_data_stage4_notification_ngen_file_field_file_field'));
+					$uploaded_file_name = '';
 				}
+			}
+		}
 
-		 */
-
+		return array('post' => array('field_id_'.$this->field['field_id'] => array('file_name' => $uploaded_file_name, 'delete' => '', 'existing' => '')), 'notification' => $notification);
 	}
 
 

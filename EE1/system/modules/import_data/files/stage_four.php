@@ -66,7 +66,9 @@ require_once('classes/field_type.class.php');
 		// Lookup FF field names
 		$query = $DB->query('SHOW tables LIKE \'exp_ff_fieldtypes\''); // Check if installed
 		$ff_fieldtypes = array();
+		$ff_installed = FALSE;
 		if (!empty($query->result)) {
+			$ff_installed = TRUE;
 			$query = $DB->query('SELECT fieldtype_id, class FROM exp_ff_fieldtypes');
 			foreach ($query->result as $index => $row)
 				$ff_fieldtypes['ftype_id_'.$row['fieldtype_id']] = $row['class'];
@@ -84,7 +86,7 @@ require_once('classes/field_type.class.php');
 
 		// Populate array with all fields in the weblog
 		// Select normal fields
-		$query = $DB->query('SELECT wf.field_id, wf.field_label, wf.field_name, wf.field_required, wf.field_type, wf.field_fmt, '.($gypsy_installed ? 'wf.field_is_gypsy' : '\'n\' as field_is_gypsy').'
+		$query = $DB->query('SELECT wf.field_id, wf.field_label, wf.field_name, wf.field_required, wf.field_type, wf.field_fmt, '.($gypsy_installed ? 'wf.field_is_gypsy' : '\'n\' as field_is_gypsy').($ff_installed ? ', wf.ff_settings' : '').'
 									 FROM exp_weblogs wb, exp_field_groups fg, exp_weblog_fields wf
 									 WHERE wb.site_id = \''.$DB->escape_str($site_id).'\'
 									 AND   wb.site_id = fg.site_id
@@ -489,7 +491,9 @@ require_once('classes/field_type.class.php');
 		}
 	}
 
+	$settings_file = FALSE;
 	if (isset($_POST['settings_file'])) {
+		$settings_file = TRUE;
 		$current_post = json_decode(file_get_contents($_POST['settings_file']), TRUE);
 		$current_post['input_file'] = $_POST['input_file'];
 	} else {
@@ -535,7 +539,7 @@ require_once('classes/field_type.class.php');
 	//$r .= '<pre>'.print_r($current_post, true).'</pre>';
 	$r .= insert_data($site_id, $weblog_id, $input_type, $input_data_location, $delimiter_columns, $unique_columns, $addition_columns, $field_column_mapping, $column_field_replationship);
 
-	if (!isset($_POST['settings_file'])) {
+	if (!$settings_file) {
 		$r .= $DSP->form_open(
 							array(
 									'action'		=> 'C=modules'.AMP.'M=import_data'.AMP.'P=export_settings', 
