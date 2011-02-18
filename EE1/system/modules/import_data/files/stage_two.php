@@ -40,10 +40,10 @@
 	// Deal with file input
 	$input_upload_success = false;
 	$target_file = '';
+	$upload_location = Import_data_CP::get_input_file_upload_location();
 	if ($_FILES['input_file']['name'] != '') {
 		// Upload directory will be - {system}/modules/import_data/files/upload_input_files/
 		// This directory should have chmod 777 (PHP may not have authority to chmod)
-		$upload_location = substr(__FILE__, 0, strrpos(__FILE__, '/')).'/upload_input_files/';
 		if (!file_exists($upload_location)) {
 			mkdir($upload_location);
 			chmod($upload_location, 0777);
@@ -51,15 +51,19 @@
 		$target_file = $upload_location.time().'-'.basename($_FILES['input_file']['name']);
 		$input_upload_success = move_uploaded_file($_FILES['input_file']['tmp_name'], $target_file);
 		chmod($target_file, 0766);
+	} else if (isset($_POST['file_select']) && !empty($_POST['file_select'])) {
+		$target_file = $upload_location.$_POST['file_select'];
+		if (file_exists($target_file))
+			$input_upload_success = true;
 	}
 	$input_data_location = $target_file;
 
 	$settings_upload_success = false;
 	$target_file = '';
+	$upload_location = Import_data_CP::get_settings_file_upload_location();
 	if ($_FILES['settings_file']['name'] != '') {
 		// Upload directory will be - {system}/modules/import_data/files/upload_settings_files/
 		// This directory should have chmod 777 (PHP may not have authority to chmod)
-		$upload_location = substr(__FILE__, 0, strrpos(__FILE__, '/')).'/upload_settings_files/';
 		if (!file_exists($upload_location)) {
 			mkdir($upload_location);
 			chmod($upload_location, 0777);
@@ -67,9 +71,12 @@
 		$target_file = $upload_location.time().'-'.basename($_FILES['settings_file']['name']);
 		$settings_upload_success = move_uploaded_file($_FILES['settings_file']['tmp_name'], $target_file);
 		chmod($target_file, 0766);
+	} else if (isset($_POST['settings_select']) && !empty($_POST['settings_select'])) {
+		$target_file = $upload_location.$_POST['settings_select'];
+		if (file_exists($target_file))
+			$settings_upload_success = true;
 	}
 	$settings_data_location = $target_file;
-
 
 	if (!$settings_upload_success) {
 		$site_data = explode('#', $_POST['site_select']);
@@ -87,7 +94,7 @@
 		$input_type = $_POST['type_select'];
 		$input_type_hidden = $DSP->input_hidden('type_select', $input_type);
 	} else {
-		$settings_data_location = $DSP->input_hidden('settings_file', $settings_data_location);
+		$settings_data_hidden = $DSP->input_hidden('settings_file', $settings_data_location);
 	}
 	$input_data_hidden = $DSP->input_hidden('input_file', $input_data_location);
 
@@ -234,9 +241,9 @@ $r = '<script type="text/javascript">
 	if (!$input_upload_success) {
 		return $DSP->error_message($LANG->line('import_data_stage2_input_error'), 1);
 	} else {
-		$r .= $DSP->qdiv('itemWrapper', $LANG->line('import_data_stage2_input_success'));
-
 		if (!$settings_upload_success) {
+			$r .= $DSP->qdiv('itemWrapper', $LANG->line('import_data_stage2_input_success'));
+
 			$form_submit = $DSP->input_submit($LANG->line('import_data_form_continue'));
 
 			$r .= $DSP->form_open(
@@ -292,7 +299,8 @@ $r = '<script type="text/javascript">
 
 		} else {
 			$form_submit = $DSP->input_submit($LANG->line('import_data_form_publish'));
-			$r .= $DSP->qdiv('itemWrapper', $LANG->line('import_data_stage2_settings_success'));
+			$r .= $DSP->qdiv('itemWrapper', $LANG->line('import_data_stage2_input_success').'<br /><i>'.$input_data_location.'</i>');
+			$r .= $DSP->qdiv('itemWrapper', $LANG->line('import_data_stage2_settings_success').'<br /><i>'.$settings_data_location.'</i>');
 			$r .= $DSP->qdiv('itemWrapper', '<strong>'.$LANG->line('import_data_stage2_publish_message').'</strong>');
 
 			$r .= $DSP->form_open(
@@ -306,7 +314,7 @@ $r = '<script type="text/javascript">
 									)
 							 );
 
-		$r .= $settings_data_location.$input_data_hidden;
+		$r .= $settings_data_hidden.$input_data_hidden;
 
 		}
 

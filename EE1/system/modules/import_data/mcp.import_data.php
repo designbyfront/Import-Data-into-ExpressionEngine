@@ -103,6 +103,16 @@ class Import_data_CP
 		}
 	}
 
+	function get_input_file_upload_location()
+	{
+		return substr(__FILE__, 0, strrpos(__FILE__, '/')).'/files/upload_input_files/';
+	}
+
+	function get_settings_file_upload_location()
+	{
+		return substr(__FILE__, 0, strrpos(__FILE__, '/')).'/files/upload_settings_files/';
+	}
+
 	// Stage four - Enter the data into EE (printing success and error)
 	function stage_four()
 	{
@@ -129,16 +139,28 @@ class Import_data_CP
 
 	function export_settings()
 	{
+		global $DB;
+
 		//ob_start();
-		header ('Content-Type: application/octet-stream');
-		header ('Content-Disposition: attachment; filename=settings-'.time().'.json');
 		if (isset($_POST['referal']) && $_POST['referal'] == 'stage_four') {
 			$settings = json_decode(stripslashes($_POST['data']), TRUE);
 		} else {
 			$settings = $_POST;
 		}
 		unset($settings['input_file']);
+
+		$site_id = explode('#', $settings['site_select']);
+		$weblog_id = explode('#', $settings['weblog_select']);
+		$query = $DB->query('SELECT blog_name
+									FROM exp_weblogs
+									WHERE weblog_id = '.$DB->escape_str($weblog_id[0]).'
+									  AND site_id = '.$DB->escape_str($site_id[0]));
+		$result = $query->result[0];
+
+		header ('Content-Type: application/octet-stream');
+		header ('Content-Disposition: attachment; filename='.$result['blog_name'].'_settings-'.time().'.json');
 		echo json_encode($settings);
+
 		exit();
 	}
 
