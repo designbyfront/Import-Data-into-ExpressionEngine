@@ -6,11 +6,8 @@ $L = array(
 // Required for MODULES page
 //----------------------------------------
 
-'import_data_module_name' =>
-'Import Data',
-
-'import_data_module_description' =>
-'Wizard to import external data into ExpressionEngine',
+	'import_data_module_name'        => 'Import Data',
+	'import_data_module_description' => 'Wizard to import external data into ExpressionEngine',
 
 //----------------------------------------
 
@@ -27,27 +24,32 @@ $L = array(
 	'import_data_stage4_heading' => 'Import Data - Stage 4',
 
 	// GENERAL FORM TEXT
-	'import_data_site_select'              => 'Site',
-	'import_data_section_select'           => 'Weblog',
-	'import_data_input_file'               => 'Input File',
-	'import_data_input_settings'           => 'Settings',
-	'import_data_type_select'              => 'Type',
-	//'import_data_notes_title'              => 'Notes',
-	//'import_data_notes_data'               => 'If your input file is CSV, the first row must contain headings!',
-	'import_data_form_continue'            => 'Continue',
-	'import_data_form_publish'             => 'Publish',
-	'import_data_form_export_settings'     => 'Export Settings to File',
-	'import_data_input_field_select'       => 'Input data field',
-	'import_data_has_relationship'         => 'has relationship with',
-	'import_data_field_select'             => 'Field',
-	'import_data_unique_field'             => 'Unique?',
-	'import_data_addition_field'           => 'Disable overwrite behaviour',
-	'import_data_delimiter_field'          => 'In field delimiter:',
-	'import_data_error_input_type'         => 'Error: Unable to open input file',
-	'import_data_unknown_input_type'       => 'Unknown input type',
-	'import_data_default_select'           => 'Default',
-	'import_data_unimplemented_input_type' => ' data input has not been implemented',
-	'import_data_object_implementation'    => '<b>Error:</b> Input object has not been implemented correctly - missing interface \'Input_type\'',
+	'import_data_site_select'                 => 'Site',
+	'import_data_section_select'              => 'Weblog',
+	'import_data_input_file'                  => 'Input File',
+	'import_data_input_settings'              => 'Settings',
+	'import_data_type_select'                 => 'Type',
+	'import_data_form_continue'               => 'Continue',
+	'import_data_form_publish'                => 'Publish',
+	'import_data_form_export_settings'        => 'Export Settings to File',
+	'import_data_input_field_select'          => 'Input data field',
+	'import_data_has_relationship'            => 'has relationship with',
+	'import_data_field_select'                => 'Field',
+	'import_data_unique_field'                => 'Unique?',
+	'import_data_addition_field'              => 'Disable overwrite behaviour',
+	'import_data_delimiter_field'             => 'In field delimiter:',
+	'import_data_error_input_type'            => 'Unable to open input file',
+	'import_data_error_input_file_permission' => 'Unable to open input file - file not readable',
+	'import_data_unknown_input_type'          => 'Unknown input type',
+	'import_data_default_select'              => 'Default',
+	'import_data_unimplemented_input_type'    => ' data input has not been implemented',
+	'import_data_object_implementation'       => 'Input object has not been implemented correctly - missing interface \'Input_type\'',
+
+	'import_data_error_required_data_missing'       => 'Required data is missing - ',
+	'import_data_error_selected_site_missing'       => 'Selected site is missing',
+	'import_data_error_selected_weblog_missing'     => 'Selected weblog is missing',
+	'import_data_error_input_file_location_missing' => 'Location of input file is missing',
+	'import_data_error_input_type_missing'          => 'Type of input file is missing',
 
 	// STAGE 1 FORM TEXT
 	'import_data_relationship_check'             => 'Relationships with existing entries?',
@@ -72,8 +74,9 @@ $L = array(
 	'import_data_stage3_show_relationships_title' => 'Selected Relationships',
 
 	// STAGE 4 SUMMARY TEXT
-	'import_data_stage4_missing_fieldtype_1'      => '<b>Error:</b> Unable to find required field type - please make sure fieldtype \'',
+	'import_data_stage4_missing_fieldtype_1'      => 'Unable to find required field type - please make sure fieldtype \'',
 	'import_data_stage4_missing_fieldtype_2'      => '\' has been implemented',
+	'import_data_stage4_settings_file_permission' => 'Unable to open settings file - file not readable',
 	'import_data_stage4_row_error'                => '<b>Failed</b> on data input for row ',
 	'import_data_stage4_missing_data'             => '(data missing for required field)',
 	'import_data_stage4_no_title'                 => '(title field empty)',
@@ -85,8 +88,8 @@ $L = array(
 	'import_data_stage4_missing_author_1'         => '(author \'',
 	'import_data_stage4_missing_author_2'         => '\' does not exist)',
 	'import_data_stage4_no_author'                => '(author field empty)',
-	'import_data_stage4_invalid_status_1'         => '(status \'',
-	'import_data_stage4_invalid_status_2'         => '\' is not in the status group assigned to this weblog)',
+	'import_data_stage4_invalid_status_1'         => 'Status \'',
+	'import_data_stage4_invalid_status_2'         => '\' is not in the status group assigned to this weblog',
 	'import_data_stage4_submission_success'       => 'Successfully entered data for ',
 	'import_data_stage4_submission_failed'        => '<b>Failed</b> to enter data for ',
 	'import_data_stage4_submission_object_failed' => '<b>Failed</b> to create a submission object for ',
@@ -98,6 +101,9 @@ $L = array(
 	// STAGE 4 NOTIFICATION MESSAGES
 	'import_data_stage4_notification_row_1'       => 'Row ',
 	'import_data_stage4_notification_row_2'       => ': ',
+
+	'import_data_stage4_notification_url_title_1' => 'The URL title \'',
+	'import_data_stage4_notification_url_title_2' => '\' has already been used. EE will automatically change this to a unique value.',
 
 	'import_data_stage4_notification_fieldtype_1' => 'A non-required field (',
 	'import_data_stage4_notification_fieldtype_2' => ') of unknown field type \'',

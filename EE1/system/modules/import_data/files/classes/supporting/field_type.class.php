@@ -1,16 +1,36 @@
 <?php
-/*
- * Field Type
+/**
+ * Import Data into ExpressionEngine
  *
  * ### EE 1.6 version ###
  *
- * Generates correct data structure for field types POST data
+ *
+ * FIELD TYPES
+ *  - Generates correct data structure for field types POST data
+ *
+ * Supported Types:
+ * text, textarea, select, post_data_select, date, rel, ngen_file_field, playa, ff_checkbox, wygwam
+ *
+ *
+ * Created by Front
+ * Useful, memorable and satisfying things for the web.
+ * We create amazing online experiences that delight users and help our clients grow.
+ *
+ * Support
+ * Please use the issues page on GitHub: http://github.com/designbyfront/Import-Data-into-ExpressionEngine/issues
+ * or email us: info@designbyfront.com
+ *
+ * License and Attribution
+ * This work is licensed under the Creative Commons Attribution-Share Alike 3.0 Unported.
+ * As this program is licensed free of charge, there is no warranty for the program, to the extent permitted by applicable law.
+ * For more details, please see: http://github.com/designbyfront/Import-Data-into-ExpressionEngine/#readme
+ *
  *
  * @package DesignByFront
  * @author  Alistair Brown
+ * @author  Shann McNicholl
  * @link    http://github.com/designbyfront/Import-Data-into-ExpressionEngine
- * @since   Version 0.1
- *
+ * 
  */
 
 class Field_type {
@@ -26,22 +46,6 @@ class Field_type {
 	private $added_ids;
 	private $relationships;
 	private $addition_override;
-
-	// Mapping of field types to function
-	public $supported_types = array(
-		'text'            => 'post_data_text',
-		'textarea'        => 'post_data_textarea',
-		'select'          => 'post_data_select',
-		'date'            => 'post_data_date',
-		'rel'             => 'post_data_rel',
-		'ngen_file_field' => 'post_data_ngen_file_field',
-		'playa'           => 'post_data_playa',
-		'ff_checkbox'     => 'post_data_ff_checkbox',
-		'wygwam'          => 'post_data_wygwam',
-		'sl_google_map'   => '', //Not implemented
-		'matrix'          => '', //Not implemented
-		''                => ''  //Blank
-	);
 
 // --- SETTINGS ---------------
 
@@ -69,9 +73,15 @@ class Field_type {
 	);
 
 
+	function Field_type ()
+	{
+		$this->__construct();
+	}
+
+
 	/*
 	 * @params order             - int corresponding to the number of previous fields executed [Incremental] (not including EE specific fields)
-	 * @params entry_number      - int corresponding to the line of the input file currently being processed
+	 * @params row_number        - int corresponding to the line of the input file currently being processed
 	 * @params column_index      - int corresponding to index for the column of current row in the input file
 	 *                             -or- array of ints if type in 'multi_field_types' array
 	 * @params site_id           - int specifying ExpressionEngine site
@@ -85,11 +95,12 @@ class Field_type {
 	 * @params relationships     - associative array  of user defined data relationships [{column_index} => {some_weblog_id}#{some_field_id}] (or empty if not defined in stage 2)
 	 * @params addition_override - boolean whether to override default behaviour of overwriting and add to field [only applicable for field types in addition_field_types] (defined in stage 3)
 	 */
-	public function __construct($order, $entry_number, $column_index, $site_id, $weblog_id, $field, $value, $existing, $added_ids, $relationships, $addition_override) {
+	function __construct ($order, $row_number, $column_index, $site_id, $weblog_id, $field, $value, $existing, $added_ids, $relationships, $addition_override)
+	{
 		//echo 'Input:<pre>'.print_r(array($order, $site_id, $weblog_id, $field, $value, $existing, $added_ids, $relationships), true).'</pre>';
 
 		$this->order             = $order;
-		$this->entry_number      = $entry_number;
+		$this->row_number        = $row_number;
 		$this->column_index      = $column_index;
 		$this->site_id           = $site_id;
 		$this->weblog_id         = $weblog_id;
@@ -107,75 +118,90 @@ class Field_type {
 	 *           - mapping from 'notification' to string or array of strings
 	 *         array can be empty
 	 */
-	public function post_value() {
-		if (isset($this->supported_types[$this->field['field_type']]))
-			if (method_exists($this, $this->supported_types[$this->field['field_type']]))
-				return $this->{$this->supported_types[$this->field['field_type']]}();
+	public function post_value ()
+	{
+		if (method_exists($this, 'post_data_'.$this->field['field_type']))
+			return $this->{'post_data_'.$this->field['field_type']}();
 		return FALSE;
 	}
 
 
 // ---- Supported Field Type Functions ------
 
-	private function post_data_text() {
+	private function post_data_text ()
+	{
+		// If value is empty, default to existing if possible
 		if ($this->value === NULL || $this->value === '')
 			if (isset($this->existing['field_id_'.$this->field['field_id']]))
 				$this->value = $this->existing['field_id_'.$this->field['field_id']];
 			else
 				$this->value = '';
+		// Return formatted data
 		return array('post' => array('field_id_'.$this->field['field_id'] => $this->value, 'field_ft_'.$this->field['field_id'] => $this->field['field_fmt']));
 	}
 
 
 
-	private function post_data_textarea() {
+	private function post_data_textarea ()
+	{
+		// Format same as text
 		return $this->post_data_text();
 	}
 
 
 
-	private function post_data_select() {
+	private function post_data_select ()
+	{
+		// Format same as text
 		return $this->post_data_text();
 	}
 
 
 
-	private function post_data_date() {
+	private function post_data_date ()
+	{
+		// If value is empty, default to existing if possible
 		if ($this->value === NULL || $this->value === '')
 			if (isset($this->existing['field_id_'.$this->field['field_id']]))
 				$this->value = $this->existing['field_id_'.$this->field['field_id']];
 			else
 				$this->value = '';
+		// Return formatted data, interpretting value as date
 		return array('post' => array('field_id_'.$this->field['field_id'] => date("Y-m-d H:i A", strtotime($this->value))));
 	}
 
 
 
-	private function post_data_rel() {
+	private function post_data_rel ()
+	{
 		global $DB, $LANG;
 
+		// If value is empty, default to existing if possible
 		if ($this->value === NULL || $this->value === '')
 			return array('post' => array('field_id_'.$this->field['field_id'] => (isset($this->existing['field_id_'.$this->field['field_id']]) ? $this->existing['field_id_'.$this->field['field_id']] : '')));
+
+		// If no relationships set, return empty
 		if (!isset($this->relationships[$this->column_index]))
 			return array();
 
 		$pieces = explode('#', $this->relationships[$this->column_index]);
+		// If no second value, match with title
 		if (empty($pieces[1])) {
 			$query = 'SELECT entry_id
-								FROM exp_weblog_titles
-								WHERE site_id = '.$DB->escape_str($this->site_id).'
-								AND   weblog_id = '.$DB->escape_str($pieces[0]).'
-								AND   title = \''.$DB->escape_str($this->value).'\'
-								LIMIT 1';
+			          FROM exp_weblog_titles
+			          WHERE site_id = '.$DB->escape_str($this->site_id).'
+			            AND weblog_id = '.$DB->escape_str($pieces[0]).'
+			            AND title = \''.$DB->escape_str($this->value).'\'
+			          LIMIT 1';
+		// If second value, match with field
 		} else {
 			$query = 'SELECT entry_id
-								FROM exp_weblog_data
-								WHERE site_id = '.$DB->escape_str($this->site_id).'
-								AND   weblog_id = '.$DB->escape_str($pieces[0]).'
-								AND   field_id_'.$DB->escape_str($pieces[1]).' = \''.$DB->escape_str($this->value).'\'
-								LIMIT 1';
+			          FROM exp_weblog_data
+			          WHERE site_id = '.$DB->escape_str($this->site_id).'
+			            AND weblog_id = '.$DB->escape_str($pieces[0]).'
+			            AND field_id_'.$DB->escape_str($pieces[1]).' = \''.$DB->escape_str($this->value).'\'
+			          LIMIT 1';
 		}
-		//echo "<br /><br />\n\n".$query;
 
 		$query = $DB->query($query);
 		$existing_entry = $query->result;
@@ -187,27 +213,31 @@ class Field_type {
 
 
 
-	private function post_data_ngen_file_field() {
+	private function post_data_ngen_file_field ()
+	{
 		global $DB, $LANG;
 		$notification = array();
 		$uploaded_file_name = '';
+		// If value is empty, default to existing if possible
 		if ($this->value === NULL || $this->value === '' || !isset($this->field['ff_settings'])) {
 			if (isset($this->existing['field_id_'.$this->field['field_id']]))
 				$uploaded_file_name = $this->existing['field_id_'.$this->field['field_id']];
 		} else {
+			// Get upload location set by user
 			$upload_settings = unserialize($this->field['ff_settings']);
 			$query = 'SELECT name, server_path
-							FROM exp_upload_prefs
-							WHERE id = '.$DB->escape_str($upload_settings['options']).'
-							AND site_id = '.$DB->escape_str($this->site_id);
-			//echo "<br /><br />\n\n".$query;
-
+			          FROM exp_upload_prefs
+			          WHERE id = '.$DB->escape_str($upload_settings['options']).'
+			          AND site_id = '.$DB->escape_str($this->site_id);
 			$query = $DB->query($query);
 			$upload_location = $query->result;
+			// If unable to get upload location
 			if (empty($upload_location)) {
 				$notification[] = $this->format_notification($LANG->line('import_data_stage4_notification_ngen_file_field_upload_location_1').$upload_settings['options'].$LANG->line('import_data_stage4_notification_ngen_file_field_upload_location_2'), TRUE);
+			// If file location provided is invalid
 			} else if (!file_exists($this->value)) {
 				$notification[] = $this->format_notification($LANG->line('import_data_stage4_notification_ngen_file_field_file_missing').$this->value.$LANG->line('import_data_stage4_notification_quote'));
+			// Else move file from location provided to upload location
 			} else {
 				$uploaded_file_name = basename($this->value);
 				$upload_location = $upload_location[0];
@@ -227,7 +257,8 @@ class Field_type {
 
 
 
-	private function post_data_playa() {
+	private function post_data_playa ()
+	{
 		global $DB, $LANG;
 
 /*
@@ -245,16 +276,14 @@ class Field_type {
 			$current_relations = $matches[1];
 			// Convert relations into entry IDs
 			$query = 'SELECT rel_child_id
-								FROM exp_relationships
-								WHERE rel_parent_id = '.$this->existing['entry_id'].'
-								AND   rel_id IN ('.implode(',', $current_relations).')';
-			//echo "<br />\n".$query."<br /><br />\n";
+			          FROM exp_relationships
+			          WHERE rel_parent_id = '.$this->existing['entry_id'].'
+			            AND rel_id IN ('.implode(',', $current_relations).')';
 			$query = $DB->query($query);
 			$get_previous_entries = $query->result;
 			foreach ($get_previous_entries as $get_previous_entry)
 				$previous_entries[] = $get_previous_entry['rel_child_id'];
 		}
-
 
 		// If given no relationship, send empty
 		if (is_array($this->column_index)) {
@@ -302,18 +331,18 @@ class Field_type {
 				// If $pieces[1] is 0, we have selected a title
 				if ($pieces[1] == 0) {
 					$query = 'SELECT entry_id, title as field_id_'.$DB->escape_str($this->field['field_id']).'
-										FROM exp_weblog_titles
-										WHERE site_id = '.$DB->escape_str($this->site_id).'
-										AND   weblog_id = '.$DB->escape_str($pieces[0]).'
-										AND   title = \''.$DB->escape_str($given_value).'\'
-										LIMIT 1';
+			                FROM exp_weblog_titles
+			                WHERE site_id = '.$DB->escape_str($this->site_id).'
+			                  AND weblog_id = '.$DB->escape_str($pieces[0]).'
+			                  AND title = \''.$DB->escape_str($given_value).'\'
+			                LIMIT 1';
 				} else {
 					$query = 'SELECT entry_id, field_id_'.$DB->escape_str($this->field['field_id']).'
-										FROM exp_weblog_data
-										WHERE site_id = '.$DB->escape_str($this->site_id).'
-										AND   weblog_id = '.$DB->escape_str($pieces[0]).'
-										AND   field_id_'.$DB->escape_str($pieces[1]).' = \''.$DB->escape_str($given_value).'\'
-										LIMIT 1';
+			                FROM exp_weblog_data
+			                WHERE site_id = '.$DB->escape_str($this->site_id).'
+			                  AND weblog_id = '.$DB->escape_str($pieces[0]).'
+			                  AND field_id_'.$DB->escape_str($pieces[1]).' = \''.$DB->escape_str($given_value).'\'
+			                LIMIT 1';
 				}
 				//echo "<br />\n".$query."<br /><br />\n";
 				$query = $DB->query($query);
@@ -334,7 +363,8 @@ class Field_type {
 
 
 
-	private function post_data_ff_checkbox() {
+	private function post_data_ff_checkbox ()
+	{
 		if ($this->value === NULL || $this->value === '')
 			if (isset($this->existing['field_id_'.$this->field['field_id']]))
 				$this->value = $this->existing['field_id_'.$this->field['field_id']];
@@ -349,14 +379,15 @@ class Field_type {
 		else if (in_array($this->value, $negative))
 			$this->value = FALSE;
 		else
-			$this->value = (bool)$this->value;
+			$this->value = (bool) $this->value;
 
 		return array('post' => array('field_id_'.$this->field['field_id'] => ($this->value ? 'y' : 'n')));
 	}
 
 
 
-	private function post_data_wygwam() {
+	private function post_data_wygwam ()
+	{
 		if ($this->value === NULL || $this->value === '')
 			$this->value = (isset($this->existing['field_id_'.$this->field['field_id']]) ? $this->existing['field_id_'.$this->field['field_id']] : '');
 		$data_array = array('old' => $this->existing['field_id_'.$this->field['field_id']],
@@ -366,66 +397,18 @@ class Field_type {
 
 
 
-	private function post_data_sl_google_map() {
-		// TODO
-
-		/*
-		Post data looks like:
-
-			["field_id_70"]=>
-				string(41) "54.592729,-5.928519,1,54.592729,-5.928519"
-
-		That is a string with "{new_long},{new_lat},{zoom_level},{default_long},{default_lat}"
-
-		 */
-
-	}
-
-
-
-	private function post_data_matrix() {
-		// TODO
-
-		/*
-		Post data looks like:
-
-			["field_id_71"]=>
-				array(3) {
-					["row_order"]=>
-					array(2) {
-						[0]=>
-						string(9) "row_new_0"
-						[1]=>
-						string(9) "row_new_1"
-					}
-					["row_new_0"]=>
-					array(2) {
-						["col_id_1"]=>
-						string(15) "test-cell1-row1"
-						["col_id_2"]=>
-						string(15) "test-cell2-row1"
-					}
-					["row_new_1"]=>
-					array(2) {
-						["col_id_1"]=>
-						string(15) "test-cell1-row2"
-						["col_id_2"]=>
-						string(15) "test-cell2-row2"
-					}
-				}
-
-		 */
-
-	}
-
 	// ---- USEFUL FUNCTIONS ---------------------
 
-	private function format_notification($notification, $global = FALSE) {
+
+	private function format_notification ($notification, $global = FALSE)
+	{
 		global $LANG;
-		return ($global ? '' : $LANG->line('import_data_stage4_notification_row_1').($this->entry_number+1).$LANG->line('import_data_stage4_notification_row_2')).$notification;
+		return ($global ? '' : $LANG->line('import_data_stage4_notification_row_1').$this->row_number.$LANG->line('import_data_stage4_notification_row_2')).$notification;
 	}
-
-
 
 
 }
+
+
+/* End of file file_type.class.php */
+/* Location: ./system/modules/import_data/files/classes/supporting/file_type.class.php */

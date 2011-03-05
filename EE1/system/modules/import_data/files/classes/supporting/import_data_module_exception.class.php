@@ -4,9 +4,9 @@
  *
  * ### EE 1.6 version ###
  *
- * An ExpressionEngine Module that allows easy import of data into ExpressionEngine.
- * Built in import capabilities for CSV files to all base ExpressionEngine and numerous third party fieldtypes.
- * It can be easily extended to allow additional import types and new custom fieldtypes.
+ *
+ * IMPORT DATA MODULE EXCEPTION
+ *  - Converts exception thrown into EE error message
  *
  *
  * Created by Front
@@ -30,18 +30,16 @@
  * 
  */
 
-class Import_data {
+class Import_data_module_exception extends Exception {
 
-	var $return_data = '';
-
-	function Import_data()
+	public function error_message()
 	{
-
-
+		global $DSP;
+		return $DSP->error_message($this->getMessage(), 1);
 	}
 
 }
 
 
-/* End of file mod.import_data.php */
-/* Location: ./system/modules/module_name/mod.import_data.php */
+/* End of file import_data_module_exception.class.php */
+/* Location: ./system/modules/import_data/files/classes/supporting/import_data_module_exception.class.php */

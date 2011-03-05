@@ -1,25 +1,35 @@
 <?php
-/*
- * Submission
+/**
+ * Import Data into ExpressionEngine
  *
  * ### EE 1.6 version ###
  *
- * Uses the built in EE publish class to submit POST data
  *
- * Dependencies:
- *  - cp.publish.php [PATH_CP/cp.publish.php]
- *   ~~ EE built in publish class
+ * SUBMISSION
+ *  - Submits data to EE publish class
  *
  *
- * @package DesignByFront
- * @author  Shann McNicholl
- * @link    http://github.com/designbyfront/Import-Data into-ExpressionEngine
- * @since   Version 0.1
+ * Created by Front
+ * Useful, memorable and satisfying things for the web.
+ * We create amazing online experiences that delight users and help our clients grow.
  *
- * Edited 23/08/2010 - Alistair Brown
+ * Support
+ * Please use the issues page on GitHub: http://github.com/designbyfront/Import-Data-into-ExpressionEngine/issues
+ * or email us: info@designbyfront.com
  *
+ * License and Attribution
+ * This work is licensed under the Creative Commons Attribution-Share Alike 3.0 Unported.
+ * As this program is licensed free of charge, there is no warranty for the program, to the extent permitted by applicable law.
+ * For more details, please see: http://github.com/designbyfront/Import-Data-into-ExpressionEngine/#readme
+ *
+ *
+ * @package  DesignByFront
+ * @author   Shann McNicholl
+ * @link     http://github.com/designbyfront/Import-Data-into-ExpressionEngine
+ * @modified Alistair Brown
+ * 
  */
-
+ 
 require_once PATH_CP.'cp.publish.php'; // Used to create/update entries
 
 class Submission {
@@ -29,7 +39,14 @@ class Submission {
 
 	private $submit_function = 'submit_new_entry';
 
-	public function __construct($submission_data) {
+
+	function Submission ()
+	{
+		$this->__construct();
+	}
+
+
+	function __construct($submission_data) {
 		// Accept array of data
 		if (is_array($submission_data)) {
 			$this->site_id = $submission_data['site_id'];
@@ -56,11 +73,8 @@ class Submission {
  // 
  // Structure also needs fresh $PREFS->ini('site_pages') data in order to update the DB.
 
-		// Uses a chunk of memory
-		$PREFS->site_prefs('', $this->site_id);
-		//echo "\n<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2C.1 - Submission (save()) PREFS Memory: ".memory_get_usage(true)."<br />\n";
 
- // Find unique inputs and search on those, otherwise just create ### HOW DO I DO THIS? - change submit_function ??
+		$PREFS->site_prefs('', $this->site_id);
 		$res = $this->enter_data();
 
 		if(!$res) // Something went wrong
@@ -77,20 +91,10 @@ class Submission {
 		//return FALSE;
 
 		global $IN;
-
-		// Populate the $IN variable with the POST
 		$_POST = $this->submission_data;
-
-		// Use of this code caused memory crash. Publishing seems to be successful without
-		// core.system.php ln: 385
-		//$IN->fetch_input_data();
-		//echo "\n<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2C.2 - Submission (enter_data()) IN Memory: ".memory_get_usage(true)."<br />\n";
-
 		$pub = new Publish();
 		$M = $this->submit_function;
 
-		//echo "\n<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2C.3 - Submission (enter_data()) Publish Memory: ".memory_get_usage(true)."<br />\n";
-		// If there is a method, call it.
 		if (method_exists($pub, $M)) {
 			$res = $pub->$M(true); // save/update the entry
 			return TRUE;
@@ -100,3 +104,7 @@ class Submission {
 	}
 
 }
+
+
+/* End of file submission.class.php */
+/* Location: ./system/modules/import_data/files/classes/supporting/submission.class.php */

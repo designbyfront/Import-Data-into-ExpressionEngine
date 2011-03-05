@@ -1,14 +1,33 @@
 <?php
-/*
- * Text XML File
+/**
+ * Import Data into ExpressionEngine
  *
- * Takes a Text XML file and outputs each row as correctly formatted data structure
- * Implements 'Input_type'
+ * ### EE 1.6 version ###
+ *
+ *
+ * Text XML File
+ *  - Takes a Text XML file and outputs each row as correctly formatted data structure
+ *
+ *
+ * Created by Front
+ * Useful, memorable and satisfying things for the web.
+ * We create amazing online experiences that delight users and help our clients grow.
+ *
+ * Support
+ * Please use the issues page on GitHub: http://github.com/designbyfront/Import-Data-into-ExpressionEngine/issues
+ * or email us: info@designbyfront.com
+ *
+ * License and Attribution
+ * This work is licensed under the Creative Commons Attribution-Share Alike 3.0 Unported.
+ * As this program is licensed free of charge, there is no warranty for the program, to the extent permitted by applicable law.
+ * For more details, please see: http://github.com/designbyfront/Import-Data-into-ExpressionEngine/#readme
+ *
  *
  * @package DesignByFront
  * @author  Alistair Brown
- * @link    http://github.com/designbyfront/Import-Data into-ExpressionEngine
- * @since   Version 0.1
+ * @author  Shann McNicholl
+ * @link    http://github.com/designbyfront/Import-Data-into-ExpressionEngine
+ * 
  *
  *
  * THIS IS NOT THE WAY TO WRITE YOUR XML PARSER
@@ -24,9 +43,17 @@ class Xml_test_file implements Input_type {
 	private $xml_object = FALSE;
 	private $line_count = -1;
 
-	public function Xml_test_file($location) {
+
+	function Xml_test_file ($location)
+	{
+		$this->__construct($location);
+	}
+
+
+	public function __construct($location) {
 		$this->location = $location;
 	}
+
 
 	public function get_headings() {
 		return array('id','name','country');
@@ -41,10 +68,12 @@ class Xml_test_file implements Input_type {
 		return !($this->xml_object === FALSE);
 	}
 
+
 	public function stop_reading_rows() {
 		$this->xml_object = FALSE;
 		return $this->line_count;
 	}
+
 
 	// Use start_reading_lines to get file handle
 	public function read_row() {
@@ -65,4 +94,10 @@ class Xml_test_file implements Input_type {
 		return $line;
 	}
 
+
+
 }
+
+
+/* End of file Xml_test_file.class.php */
+/* Location: ./system/modules/import_data/files/input_types/Xml_test_file.class.php */

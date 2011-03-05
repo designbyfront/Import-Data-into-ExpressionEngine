@@ -1,18 +1,37 @@
 <?php
-/*
- * Remove CSV File Input Type
+/**
+ * Import Data into ExpressionEngine
  *
- * Takes a remove CSV file, caches it and outputs each row as correctly formatted data structure
- * Implements 'Input_type'
+ * ### EE 1.6 version ###
+ *
+ *
+ * Remove CSV File Input Type
+ *  - Takes a remove CSV file, caches it and outputs each row as correctly formatted data structure
+ *
+ *
+ * Created by Front
+ * Useful, memorable and satisfying things for the web.
+ * We create amazing online experiences that delight users and help our clients grow.
+ *
+ * Support
+ * Please use the issues page on GitHub: http://github.com/designbyfront/Import-Data-into-ExpressionEngine/issues
+ * or email us: info@designbyfront.com
+ *
+ * License and Attribution
+ * This work is licensed under the Creative Commons Attribution-Share Alike 3.0 Unported.
+ * As this program is licensed free of charge, there is no warranty for the program, to the extent permitted by applicable law.
+ * For more details, please see: http://github.com/designbyfront/Import-Data-into-ExpressionEngine/#readme
+ *
  *
  * @package DesignByFront
  * @author  Alistair Brown
+ * @author  Shann McNicholl
  * @link    http://github.com/designbyfront/Import-Data-into-ExpressionEngine
- * @since   Version 0.1
- *
+ * 
  */
 
 class Remote_csv_file implements Input_type {
+
 	private $location;
 	private $length;
 	private $delimiter;
@@ -21,7 +40,15 @@ class Remote_csv_file implements Input_type {
 	private $read_line_handle = FALSE;
 	private $line_count = -1;
 
-	public function Remote_csv_file($location, $length=0, $delimiter=',', $enclosure='"') {
+
+	function Remote_csv_file ($location, $length=0, $delimiter=',', $enclosure='"')
+	{
+		$this->__construct($location, $length=0, $delimiter=',', $enclosure='"');
+	}
+
+
+	public function __construct ($location, $length=0, $delimiter=',', $enclosure='"')
+	{
 		// Extract the URL provided in the uploaded input file
 		$remote_file_location = file_get_contents($location);
 		// Determine the location to cache the remote file (upload_input_files directory)
@@ -36,7 +63,9 @@ class Remote_csv_file implements Input_type {
 		$this->enclosure = $enclosure;
 	}
 
-	public function get_headings() {
+
+	public function get_headings ()
+	{
 		$fh = fopen($this->location, "r");
 		if ($fh) {
 				$headings = fgetcsv($fh, $this->length, $this->delimiter, $this->enclosure);
@@ -47,17 +76,22 @@ class Remote_csv_file implements Input_type {
 	}
 
 
-	public function start_reading_rows() {
+	public function start_reading_rows ()
+	{
 		return $this->read_line_handle = fopen($this->location, "r");
 	}
 
-	public function stop_reading_rows() {
+
+	public function stop_reading_rows ()
+	{
 		fclose($this->read_line_handle);
 		return $this->line_count;
 	}
 
+
 	// Use start_reading_lines to get file handle
-	public function read_row() {
+	public function read_row ()
+	{
 		if (feof($this->read_line_handle)) {
 			unlink($this->location);
 			return FALSE;
@@ -70,3 +104,7 @@ class Remote_csv_file implements Input_type {
 	}
 
 }
+
+
+/* End of file Remote_csv_file.class.php */
+/* Location: ./system/modules/import_data/files/input_types/Remote_csv_file.class.php */
